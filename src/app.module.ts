@@ -3,19 +3,22 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { appConfig } from 'src/config';
-import { AdminModule } from './user/admin/admin.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { AdminModule } from './api/user/admin/admin.module';
+import { LessonModule } from './api/product/lesson/lesson.module';
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
         }),
+        
         ServeStaticModule.forRoot({
             rootPath: join(process.cwd(), 'uploads'),
             serveRoot: '/uploads',
         }),
+
         TypeOrmModule.forRootAsync({
             useFactory: async () => {
                 try {
@@ -46,6 +49,7 @@ import { join } from 'path';
         }),
         JwtModule.register({ global: true }),
         AdminModule,
+        LessonModule,
     ],
     controllers: [],
     providers: [],

@@ -86,18 +86,6 @@ export class AppService {
             }),
         );
 
-        // video uploads folder
-        const uploadsDir = path.join(process.cwd(), 'uploads');
-        const videoDir = path.join(uploadsDir, 'video');
-
-        if (!fs.existsSync(uploadsDir)) {
-            fs.mkdirSync(uploadsDir);
-        }
-        if (!fs.existsSync(videoDir)) {
-            fs.mkdirSync(videoDir);
-        }
-
-
         // swagger
         const config = new DocumentBuilder()
             .setTitle('IPOST Market')

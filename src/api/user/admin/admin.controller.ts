@@ -5,7 +5,7 @@ import { UpdateAdminDto } from './dto/update-admin.dto';
 
 @Controller('admin')
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(private readonly adminService: AdminService) { }
 
   @Post()
   create(@Body() createAdminDto: CreateAdminDto) {
@@ -19,7 +19,7 @@ export class AdminController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.adminService.findOne(+id);
+    return this.adminService.findOneById(+id);
   }
 
   @Patch(':id')
@@ -27,8 +27,13 @@ export class AdminController {
     return this.adminService.update(+id, updateAdminDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.adminService.remove(+id);
+  @Delete('soft/:id')
+  softDelete(@Param('id') id: string) {
+    return this.adminService.softDelete(+id);
+  }
+
+  @Delete('hard/:id')
+  hardDelete(@Param('id') id: string) {
+    return this.adminService.softDelete(+id);
   }
 }

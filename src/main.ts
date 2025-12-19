@@ -1,4 +1,5 @@
-import { AppService } from "./api/app.service";
+import { AppService } from "./app.service";
+
 AppService.main()
 
 // import { appConfig } from "./config";
