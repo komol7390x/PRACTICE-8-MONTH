@@ -14,6 +14,7 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
   get getRepository() {
     return this.repository;
   }
+  // ---------------- CREATE ----------------
 
   async create(dto: CreateDto): Promise<IResponse> {
     let data = this.repository.create({
@@ -22,6 +23,7 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
     data = await this.repository.save(data);
     return successRes(data, 201);
   }
+  // ---------------- FIND ALL ----------------
 
   async findAll(options?: IFindOptions<Entity>): Promise<IResponse> {
     const data = (await this.repository.find({
@@ -29,12 +31,15 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
     })) as Entity[];
     return successRes(data);
   }
+  // ---------------- FIND PAGANATION----------------
 
   async findAllWithPagination(
     options?: IFindOptions<Entity>,
   ): Promise<IResponsePagination> {
-    return await RepositoryPager.findAll(this.getRepository, options);
+    return await RepositoryPager.findAll(
+      this.getRepository, options);
   }
+  // ---------------- FIND ONE BY ----------------
 
   async findOneBy(options: IFindOptions<Entity>): Promise<IResponse> {
     const data = (await this.repository.findOne({
@@ -47,6 +52,7 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
     }
     return successRes(data);
   }
+  // ---------------- FIND ONE ----------------
 
   async findOneById(
     id: string | number,
@@ -62,6 +68,7 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
     }
     return successRes(data);
   }
+  // ---------------- UPDATE DELETE ----------------
 
   async update(id: string | number, dto: UpdateDto): Promise<IResponse> {
     await this.findOneById(id);
@@ -69,12 +76,14 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
     const data = await this.repository.findOne({ where: { id } });
     return successRes(data);
   }
+  // ---------------- HARD DELETE ----------------
 
   async delete(id: string | number): Promise<IResponse> {
     await this.findOneById(id);
     (await this.repository.delete(id)) as unknown as Entity;
     return successRes({});
   }
+  // ---------------- SOFT DELETE ----------------
 
   async softDelete(id: string | number): Promise<IResponse> {
     const user = await this.repository.findOne({ where: { id } });
@@ -83,11 +92,12 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
     }
     console.log('user', user);
     user.isDeleted = true;
+    user.isActive = false
 
     const data = await this.repository.save(user);
     return successRes({ isDelete: data?.isDeleted });
   }
-
+  // ---------------- UPDATE STATUS ----------------
   async updateStatus(id: string | number): Promise<IResponse> {
     const user = await this.repository.findOne({ where: { id } });
     if (!user) {

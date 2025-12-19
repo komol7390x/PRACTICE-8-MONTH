@@ -3,11 +3,8 @@ import { IResponsePagination } from './successResponse';
 export class Pager<T> {
   public static of<T>(
     statusCode: number,
-    message: {
-      uz: string;
-      ru: string;
-      en: string;
-    },
+    message: string,
+    status: boolean,
     data: Array<T>,
     totalElements: number,
     pageSize: number,
@@ -19,6 +16,7 @@ export class Pager<T> {
     return new Pager(
       statusCode,
       message,
+      status,
       data,
       totalElements,
       Math.ceil(totalElements / pageSize),
@@ -31,11 +29,8 @@ export class Pager<T> {
 
   private constructor(
     private statusCode: number,
-    private message: {
-      uz: string;
-      ru: string;
-      en: string;
-    },
+    private message: string,
+    private status: boolean,
     private data: Array<T>,
     private totalElements: number,
     private totalPages: number,
@@ -43,17 +38,14 @@ export class Pager<T> {
     private currentPage: number,
     private from: number,
     private to: number,
-  ) {}
+  ) { }
 
   public toPage(): IResponsePagination {
     return {
       statusCode: this.statusCode,
-      message: {
-        uz: this.message.uz,
-        ru: this.message.ru,
-        en: this.message.en,
-      },
+      message: this.message,
       data: this.data,
+      status: this.status,
       totalElements: this.totalElements,
       totalPages: this.totalPages,
       pageSize: this.pageSize,

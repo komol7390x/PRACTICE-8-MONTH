@@ -8,13 +8,15 @@ import { AdminEntity } from './entities/admin.entity';
 import { successRes } from 'src/infrastructure/response/success.response';
 import { IToken } from 'src/infrastructure/token/interface';
 import { IResponse } from 'src/infrastructure/pagination/successResponse';
-import { Not, Repository } from 'typeorm';
+import { Brackets, FindOptionsOrder, FindOptionsWhere, Not, Repository } from 'typeorm';
 import { SigninDto } from 'src/common/dto/signin.dto';
 import { UpdatePasswordDto } from 'src/common/dto/update-password.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TokenService } from 'src/infrastructure/token/Token';
 import { CryptoService } from 'src/infrastructure/crypto/crypto.service';
 import { type Response } from 'express';
+import { TokenName } from 'src/common/enum/token-name';
+import { SortEnum } from './enum/admin-enum';
 @Injectable()
 export class AdminService
   extends BaseService<CreateAdminDto, UpdateAdminDto, AdminEntity>
@@ -61,6 +63,63 @@ export class AdminService
     const data = await this.adminRepo.save(adminData);
 
     return successRes(data, 201);
+  }
+  // --------------------- FIND ALL ADMIN ---------------------
+  async findAllAdmin(
+    page: number = 1,
+    limit: number = 100,
+    search?: string,
+    sort: SortEnum = SortEnum.CREATED_AT,
+  ) {
+    const skip = (page - 1) * limit;
+
+    // Default where
+    const where: any = {
+      isDeleted: false,
+    };
+
+    // Sort
+    const order: FindOptionsOrder<AdminEntity> = {
+      [sort]: 'DESC',
+    };
+    if (search) {
+      const qb = this.adminRepo.createQueryBuilder('a')
+        .where('a.isDeleted = :isDeleted', { isDeleted: false })
+        .andWhere(
+          new Brackets(qb => {
+            if (!isNaN(Number(search))) {
+              qb.orWhere('a.id = :id', { id: Number(search) });
+            }
+            qb.orWhere('a.phoneNumber = :phoneNumber', { phoneNumber: search });
+            qb.orWhere('a.username ILIKE :username', { username: `%${search}%` });
+          })
+        )
+        .orderBy(`a.${sort}`, 'DESC')
+        .skip(skip)
+        .take(limit);
+
+      const [admins, total] = await qb.getManyAndCount();
+      return { admins, total };
+    }
+
+    // Agar search bo‘lmasa oddiy findAndCount
+    const [admins, total] = await this.adminRepo.findAndCount({
+      where,
+      order,
+      skip,
+      take: limit,
+      select: {
+        id: true,
+        fullName: true,
+        createdAt: true,
+        username: true,
+        role: true,
+        avatarUrl: true,
+        isActive: true,
+      },
+    });
+
+    return { admins, total };
   }
   // --------------------- UPDATE ---------------------
 
@@ -112,8 +171,7 @@ export class AdminService
     };
     const accessToken = await this.tokenService.accessToken(payload);
 
-    // const refreshToken = await this.tokenService.refreshToken(payload);
-    // await this.tokenService.writeCookie(res, 'adminToken', refreshToken, 30);
+    await this.tokenService.writeCookie(res, TokenName.ADMIN_TOKEN, accessToken, 30);
 
     return successRes({
       token: accessToken,

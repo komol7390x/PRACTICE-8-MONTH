@@ -1,11 +1,24 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString, IsStrongPassword, Length } from "class-validator";
+import { IsNotEmpty, IsOptional, IsString, IsStrongPassword, Length, Matches } from "class-validator";
 
 export class CreateAdminDto {
     @ApiProperty({
         type: String,
+        description: 'Adminning telefon raqami (+998901234567 formatida)',
+        example: '+998901234567',
+        required: false,
+    })
+    @IsString({ message: 'phoneNumber satr (string) bo\'lishi kerak' })
+    @Matches(/^\+?\d{9,15}$/, {
+        message: 'phoneNumber to\'g\'ri formatda bo\'lishi kerak (faqat raqam, + bilan)',
+    })
+    @IsOptional()
+    phoneNumber?: string;
+
+    @ApiProperty({
+        type: String,
         description: 'Adminning username',
-        example: 'admin_user',
+        example: 'admin',
         required: false,
     })
     @IsString({ message: 'username satr (string) bolishi kerak' })
@@ -28,7 +41,7 @@ export class CreateAdminDto {
         type: String,
         description:
             'Mustahkam parol: kamida 8 ta belgi, 1 ta katta harf, 1 ta kichik harf, 1 ta raqam va 1 ta maxsus belgi bolishi kerak',
-        example: 'Admin!',
+        example: 'Admin123!@',
         minLength: 8,
         required: true,
     })

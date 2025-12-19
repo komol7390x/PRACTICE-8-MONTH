@@ -7,6 +7,12 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
 import { AdminModule } from './api/user/admin/admin.module';
 import { LessonModule } from './api/product/lesson/lesson.module';
+import { TeacherModule } from './api/user/teacher/teacher.module';
+import { StudentModule } from './api/user/student/student.module';
+import { PaymentModule } from './api/product/payment/payment.module';
+import { ScheduleModule } from './api/product/schedule/schedule.module';
+import { EarningsModule } from './api/product/earnings/earnings.module';
+import { StatisticaModule } from './api/product/statistica/statistica.module';
 
 @Module({
     imports: [
@@ -50,6 +56,12 @@ import { LessonModule } from './api/product/lesson/lesson.module';
         JwtModule.register({ global: true }),
         AdminModule,
         LessonModule,
+        TeacherModule,
+        StudentModule,
+        PaymentModule,
+        ScheduleModule,
+        EarningsModule,
+        StatisticaModule,
     ],
     controllers: [],
     providers: [],

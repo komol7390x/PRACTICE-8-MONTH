@@ -2,11 +2,8 @@ import { FindManyOptions } from 'typeorm';
 
 export interface IResponse {
   statusCode: number;
-  message: {
-    uz: string;
-    en: string;
-    ru: string;
-  };
+  message: string,
+  status: boolean,
   data: object;
 }
 

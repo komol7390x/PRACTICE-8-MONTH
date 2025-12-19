@@ -18,11 +18,8 @@ export class RepositoryPager {
     );
     return Pager.of(
       200,
-      {
-        uz: 'Amaliyot muvaffaqiyatli bajarildi',
-        en: 'Operation successfully completed',
-        ru: 'Операция успешно выполнена',
-      },
+      'success',
+      true,
       data,
       count,
       options?.take ?? this.DEFAULT_PAGE_SIZE,
