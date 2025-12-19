@@ -25,7 +25,7 @@ export class AppService {
             logger: winstonConfig,
         });
         app.use(
-            ['/api', '/swagger'],
+            ['/swagger',],
             basicAuth({
                 challenge: true,
                 users: {
@@ -96,14 +96,14 @@ export class AppService {
                 in: 'Header',
             })
             .build();
-        const api = 'api'
+        const swagger = 'swagger'
         const documentFactory = () => SwaggerModule.createDocument(app, config);
-        SwaggerModule.setup(api, app, documentFactory());
+        SwaggerModule.setup(swagger, app, documentFactory());
 
         await app.listen(appConfig.PORT, () => {
             console.log(`Server started on port ${appConfig.PORT} \n`);
             console.log(`http://${appConfig.DOMAIN}:${appConfig.PORT}/${appConfig.APP_VERSION}`)
-            console.log(`Swagger http://${appConfig.DOMAIN}:${appConfig.PORT}/${api}`)
+            console.log(`Swagger http://${appConfig.DOMAIN}:${appConfig.PORT}/${swagger}`)
         });
     }
 }
