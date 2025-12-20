@@ -15,6 +15,7 @@ import { EarningsModule } from './api/product/earnings/earnings.module';
 import { StatisticaModule } from './api/product/statistica/statistica.module';
 import { CertificateModule } from './api/product/certificate/certificate.module';
 import { AuthModule } from './api/user/auth/auth.module';
+import { EducationModule } from './api/post/education/education.module';
 
 @Module({
     imports: [
@@ -66,6 +67,7 @@ import { AuthModule } from './api/user/auth/auth.module';
         StatisticaModule,
         CertificateModule,
         AuthModule,
+        EducationModule,
     ],
     controllers: [],
     providers: [],

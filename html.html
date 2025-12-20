@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Login Test</title>
+</head>
+
+<body>
+    <h1>Login with Google</h1>
+    <button id="google-login">Login with Google</button>
+
+    <script>
+        document.getElementById('google-login').addEventListener('click', () => {
+            window.location.href = 'http://localhost:3030/api/v1/auth/google';
+        });
+    </script>
+</body>
+
+</html>
