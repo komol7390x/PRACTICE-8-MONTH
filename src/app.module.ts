@@ -13,6 +13,8 @@ import { PaymentModule } from './api/product/payment/payment.module';
 import { ScheduleModule } from './api/product/schedule/schedule.module';
 import { EarningsModule } from './api/product/earnings/earnings.module';
 import { StatisticaModule } from './api/product/statistica/statistica.module';
+import { CertificateModule } from './api/product/certificate/certificate.module';
+import { AuthModule } from './api/user/auth/auth.module';
 
 @Module({
     imports: [
@@ -62,6 +64,8 @@ import { StatisticaModule } from './api/product/statistica/statistica.module';
         ScheduleModule,
         EarningsModule,
         StatisticaModule,
+        CertificateModule,
+        AuthModule,
     ],
     controllers: [],
     providers: [],

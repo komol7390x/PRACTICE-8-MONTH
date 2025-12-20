@@ -27,6 +27,12 @@ interface IConfig {
     HOST: string,
     PASS: string
   },
+  GOOGLE: {
+    ID: String,
+    SECRET_KEY: String,
+    CALLBACK_URL: String
+    JWT_SECRET: String
+  }
   GET_URL: string,
   UPLOAD_FOLDER: string;
 }
@@ -57,7 +63,12 @@ export const appConfig: IConfig = {
     PASS: String(process.env.DB_PASS)
 
   },
-
+  GOOGLE: {
+    ID: String(process.env.GOOGLE_CLIENT_ID),
+    SECRET_KEY: String(process.env.GOOGLE_CLIENT_SECRET),
+    CALLBACK_URL: String(process.env.GOOGLE_CALLBACK_URL),
+    JWT_SECRET: String(process.env.JWT_SECRET)
+  },
   GET_URL: String(process.env.GET_URL),
   UPLOAD_FOLDER: String(process.env.UPLOAD_FOLDER),
 };
