@@ -10,10 +10,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 
         if (!google.ID || !google.SECRET_KEY || !google.CALLBACK_URL) {
             throw new Error(`
-    Google OAuth environment variables are not defined.
-    Please check your .env file:
-    GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL
-  `);
+            Google OAuth environment variables are not defined.
+            Please check your .env file:
+            GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_CALLBACK_URL
+            `);
         }
 
         super({
