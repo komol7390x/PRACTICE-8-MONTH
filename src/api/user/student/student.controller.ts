@@ -61,21 +61,20 @@ export class StudentController {
   }
   // --------------------- STUDENT DETAILS ONE ---------------------
 
-  @Get('details/:id')
+  @Get('details')
 
-  @ApiOperation({ summary: 'for student' })
+  @ApiOperation({ summary: 'for student only' })
   @AccessRoles(Roles.STUDENT, 'ID')
 
   getDetails(
-    @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: IToken) {
-    return this.studentService.findOneStudent(id, user);
+    return this.studentService.findOneStudent(user.id, user);
   }
   // --------------------- UPDATE ---------------------
 
   @Patch('update/:id')
 
-  @ApiOperation({ summary: 'for super admin' })
+  @ApiOperation({ summary: 'update student by student,admin' })
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, Roles.STUDENT)
 
   update(
@@ -87,7 +86,7 @@ export class StudentController {
 
   @Patch('is-active/:id')
 
-  @ApiOperation({ summary: 'for super admin' })
+  @ApiOperation({ summary: 'blocked student by admin and super admin' })
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
 
   isActive(
@@ -99,14 +98,22 @@ export class StudentController {
   }
   // --------------------- SOFT DELETE ---------------------
 
-  @Patch('soft-delete/:id')
+  @Delete('soft-delete/:id')
+
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
+  @ApiOperation({ summary: 'soft delete student by admin and super admin' })
+
   softDelete(@Param('id') id: string) {
     return this.studentService.softDelete(+id);
   }
 
-  // --------------------- SOFT DELETE ---------------------
+  // --------------------- DELETE ---------------------
 
   @Delete('delete/:id')
+
+  @AccessRoles(Roles.SUPER_ADMIN)
+  @ApiOperation({ summary: 'delete student by and super admin' })
+
   delete(@Param('id') id: string) {
     return this.studentService.delete(+id);
   }

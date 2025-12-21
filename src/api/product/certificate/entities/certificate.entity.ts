@@ -1,6 +1,7 @@
 import { BaseEntity } from "src/core/base.entity";
-import { Column, Entity } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne } from "typeorm";
 import { LanguageLevel } from "../enum/lang-level";
+import { TeacherEntity } from "src/api/user/teacher/entities/teacher.entity";
 
 @Entity('specification')
 export class CertificateEntity extends BaseEntity {
@@ -16,6 +17,13 @@ export class CertificateEntity extends BaseEntity {
     @Column({ type: 'int' })
     hourPrice: number
 
-    @Column({ type: 'varchar', nullable: true })
-    portfolioLink: string
+    @Column({ type: 'int', nullable: true })
+    teacherId: number;
+
+    @ManyToOne(() => TeacherEntity, (teacher) => teacher.certificates, {
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    })
+    @JoinColumn({ name: 'teacherId' })
+    teacher: TeacherEntity;
 }

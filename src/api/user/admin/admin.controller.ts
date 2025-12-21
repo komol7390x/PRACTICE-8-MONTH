@@ -56,7 +56,7 @@ export class AdminController {
     return this.adminService.signOut(res, TokenName.ADMIN_TOKEN);
   }
 
-  // --------------------- FOR SUPER ADMIN ---------------------
+  // --------------------- GET ALL ADMIN ---------------------
 
   @Get('all')
 

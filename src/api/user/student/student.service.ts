@@ -46,17 +46,20 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
   ) {
     const skip = (page - 1) * limit;
 
-    const qb = this.studentRepository.createQueryBuilder('s')
+    const baseQb = this.studentRepository
+      .createQueryBuilder('s')
       .where('s.isDeleted = :isDeleted', { isDeleted: false });
 
+    // status filter
     if (status) {
-      qb.andWhere('s.isActive = :isActive', {
-        isActive: status === StudentStatus.ACTIVE ? true : false,
+      baseQb.andWhere('s.isActive = :isActive', {
+        isActive: status === StudentStatus.ACTIVE,
       });
     }
 
+    // search
     if (search) {
-      qb.andWhere(
+      baseQb.andWhere(
         new Brackets(qb => {
           if (!isNaN(Number(search))) {
             qb.orWhere('s.id = :id', { id: Number(search) });
@@ -71,16 +74,33 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
       );
     }
 
-    const orderByField = sort === StudentSort.FIRST_NAME ? 's.firstName'
-      : sort === StudentSort.LAST_NAME ? 's.lastName'
-        : sort === StudentSort.TG_USERNAME ? 's.tgUsername'
-          : `s.${sort}`;
+    // sorting
+    const orderByField =
+      sort === StudentSort.FIRST_NAME ? 's.firstName'
+        : sort === StudentSort.LAST_NAME ? 's.lastName'
+          : sort === StudentSort.TG_USERNAME ? 's.tgUsername'
+            : `s.${sort}`;
 
-    qb.orderBy(orderByField, 'DESC')
+    // list query
+    const [students, total] = await baseQb
+      .clone()
+      .orderBy(orderByField, 'DESC')
       .skip(skip)
-      .take(limit);
+      .take(limit)
+      .getManyAndCount();
 
-    const [students, total] = await qb.getManyAndCount();
+    // statistics
+    const activeCount = await this.studentRepository.count({
+      where: { isActive: true, isDeleted: false },
+    });
+
+    const inactiveCount = await this.studentRepository.count({
+      where: { isActive: false, isDeleted: false },
+    });
+
+    const deletedCount = await this.studentRepository.count({
+      where: { isDeleted: true },
+    });
 
     return {
       data: students,
@@ -90,31 +110,29 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
         limit,
         totalPages: Math.ceil(total / limit),
       },
+      stats: {
+        active: activeCount,
+        inactive: inactiveCount,
+        deleted: deletedCount,
+      },
     };
   }
 
+
   // --------------------- FIND ONE STUDENT ---------------------
 
-  async findOneStudent(id: number, user: IToken) {
+  async findOneStudent(id: number, user?: IToken) {
+
     if (isNaN(id)) {
       throw new BadRequestException('id type is NaN is not true')
     }
-    if (user.role == Roles.SUPER_ADMIN) {
-      const student = await this.studentRepository.findOne({ where: { id: user.id, role: user.role } })
-      if (!student) {
-        throw new NotFoundException(`${id} id student not found`)
-      }
-      return successRes(student)
-    }
     const student = await this.studentRepository.findOne({
-      where: { id, isActive: true, isDeleted: false, role: Roles.STUDENT }
+      where: { id, isDeleted: false, role: Roles.STUDENT }
     });
     if (!student) {
       throw new NotFoundException(`${id} id student not found`)
     }
-    const { blockedAt, blockedReason, firstName, id: studentId, isActive, lastName, phoneNumber, role, tgId, tgUsername } = student
-    const data = { blockedAt, blockedReason, firstName, id: studentId, isActive, lastName, phoneNumber, role, tgId, tgUsername }
-    return successRes({ ...data })
+    return successRes({ ...student })
 
   }
   // -------------------- UPDATE STUDENT --------------------
@@ -144,12 +162,13 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
       return this.findOneStudent(id, user)
     }
   }
+  // -------------------- BLOCKED AT --------------------
 
   async blockedStudent(id: number, blocked: boolean, dto: UpdateStudentDto) {
     const { blockedReason } = dto
     await this.findOneById(id)
     const blockedAt = new Date
-    await this.studentRepository.update({ id }, { blockedAt })
-
+    await this.studentRepository.update({ id }, { blockedAt, blockedReason, isActive: blocked })
+    return super.findOneById(id)
   }
 }
