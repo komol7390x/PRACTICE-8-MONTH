@@ -9,26 +9,26 @@ export class TeacherPaymentController {
 
   @Post()
   create(@Body() createTeacherPaymentDto: CreateTeacherPaymentDto) {
-    return this.teacherPaymentService.create(createTeacherPaymentDto);
+    return this.teacherPaymentService.createTeacherPayment(createTeacherPaymentDto);
   }
 
   @Get()
   findAll() {
-    return this.teacherPaymentService.findAll();
+    return this.teacherPaymentService.findAllTeacherPayment();
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.teacherPaymentService.findOne(+id);
+    return this.teacherPaymentService.findOneTeacherPayment(+id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateTeacherPaymentDto: UpdateTeacherPaymentDto) {
-    return this.teacherPaymentService.update(+id, updateTeacherPaymentDto);
+    return this.teacherPaymentService.updateTeacherPayment(+id, updateTeacherPaymentDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.teacherPaymentService.remove(+id);
+    return this.teacherPaymentService.removeTeacherPayment(+id);
   }
 }

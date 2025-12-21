@@ -9,26 +9,26 @@ export class GoogleController {
 
   @Post()
   create(@Body() createGoogleDto: CreateGoogleDto) {
-    return this.googleService.create(createGoogleDto);
+    return this.googleService.createGoogle(createGoogleDto);
   }
 
   @Get()
   findAll() {
-    return this.googleService.findAll();
+    return this.googleService.findAllGoogle();
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.googleService.findOne(+id);
+    return this.googleService.findOneGoogle(+id);
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateGoogleDto: UpdateGoogleDto) {
-    return this.googleService.update(+id, updateGoogleDto);
+    return this.googleService.updateGoogle(+id, updateGoogleDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.googleService.remove(+id);
+    return this.googleService.removeGoogle(+id);
   }
 }

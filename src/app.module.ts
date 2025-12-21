@@ -11,11 +11,9 @@ import { TeacherModule } from './api/user/teacher/teacher.module';
 import { StudentModule } from './api/user/student/student.module';
 import { PaymentModule } from './api/product/payment/payment.module';
 import { ScheduleModule } from './api/product/schedule/schedule.module';
-import { EarningsModule } from './api/product/earnings/earnings.module';
 import { StatisticaModule } from './api/product/statistica/statistica.module';
 import { CertificateModule } from './api/product/certificate/certificate.module';
 import { AuthModule } from './api/user/auth/auth.module';
-import { EducationModule } from './api/post/education/education.module';
 import { GoogleModule } from './api/product/google/google.module';
 import { LessonTemplateModule } from './api/product/lesson-template/lesson-template.module';
 import { DeleteUserModule } from './api/product/delete-user/delete-user.module';
@@ -65,16 +63,14 @@ import { NotificationModule } from './api/product/notification/notification.modu
         }),
         JwtModule.register({ global: true }),
         AdminModule,
-        LessonModule,
-        TeacherModule,
         StudentModule,
+        TeacherModule,
+        LessonModule,
         PaymentModule,
         ScheduleModule,
-        EarningsModule,
         StatisticaModule,
         CertificateModule,
         AuthModule,
-        EducationModule,
         GoogleModule,
         LessonTemplateModule,
         DeleteUserModule,

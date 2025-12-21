@@ -1,26 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import { CreateTeacherPaymentDto } from './dto/create-teacher-payment.dto';
 import { UpdateTeacherPaymentDto } from './dto/update-teacher-payment.dto';
+import { BaseService } from 'src/infrastructure/base/base.service';
+import { TeacherPaymentEntity } from './entities/teacher-payment.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
-export class TeacherPaymentService {
-  create(createTeacherPaymentDto: CreateTeacherPaymentDto) {
+export class TeacherPaymentService extends BaseService<CreateTeacherPaymentDto, UpdateTeacherPaymentDto, TeacherPaymentEntity> {
+  constructor(@InjectRepository(TeacherPaymentEntity) private readonly teacherPaymentRepo: Repository<TeacherPaymentEntity>) { super(teacherPaymentRepo) }
+  createTeacherPayment(createTeacherPaymentDto: CreateTeacherPaymentDto) {
     return 'This action adds a new teacherPayment';
   }
 
-  findAll() {
+  findAllTeacherPayment() {
     return `This action returns all teacherPayment`;
   }
 
-  findOne(id: number) {
+  findOneTeacherPayment(id: number) {
     return `This action returns a #${id} teacherPayment`;
   }
 
-  update(id: number, updateTeacherPaymentDto: UpdateTeacherPaymentDto) {
+  updateTeacherPayment(id: number, updateTeacherPaymentDto: UpdateTeacherPaymentDto) {
     return `This action updates a #${id} teacherPayment`;
   }
 
-  remove(id: number) {
+  removeTeacherPayment(id: number) {
     return `This action removes a #${id} teacherPayment`;
   }
 }

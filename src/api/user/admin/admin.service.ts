@@ -8,7 +8,7 @@ import { AdminEntity } from './entities/admin.entity';
 import { successRes } from 'src/infrastructure/response/success.response';
 import { IToken } from 'src/infrastructure/token/interface';
 import { IResponse } from 'src/infrastructure/pagination/successResponse';
-import { Brackets, FindOptionsOrder, FindOptionsWhere, Not, Repository } from 'typeorm';
+import { Brackets, FindOptionsOrder, Not, Repository } from 'typeorm';
 import { SigninDto } from 'src/common/dto/signin.dto';
 import { UpdatePasswordDto } from 'src/common/dto/update-password.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -17,6 +17,7 @@ import { CryptoService } from 'src/infrastructure/crypto/crypto.service';
 import { type Response } from 'express';
 import { TokenName } from 'src/common/enum/token-name';
 import { SortEnum } from './enum/admin-enum';
+import { StudentEntity } from '../student/entities/student.entity';
 @Injectable()
 export class AdminService
   extends BaseService<CreateAdminDto, UpdateAdminDto, AdminEntity>
@@ -24,6 +25,7 @@ export class AdminService
   constructor(
     @InjectRepository(AdminEntity)
     private readonly adminRepo: Repository<AdminEntity>,
+    @InjectRepository(StudentEntity) private readonly studentRepository: Repository<StudentEntity>,
     private readonly tokenService: TokenService,
     private readonly crypto: CryptoService,
   ) {
@@ -64,6 +66,13 @@ export class AdminService
 
     return successRes(data, 201);
   }
+  // --------------------- DASHBOARD ---------------------
+  async getDashboard() {
+    const allStudent = await this.studentRepository.findAndCount({ where: { isActive: true, isDeleted: false } })
+    console.log(allStudent);
+
+  }
+
   // --------------------- FIND ALL ADMIN ---------------------
   async findAllAdmin(
     page: number = 1,

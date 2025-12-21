@@ -5,9 +5,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AdminEntity } from './entities/admin.entity';
 import { TokenService } from 'src/infrastructure/token/Token';
 import { CryptoService } from 'src/infrastructure/crypto/crypto.service';
+import { StudentEntity } from '../student/entities/student.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AdminEntity])],
+  imports: [TypeOrmModule.forFeature([AdminEntity, StudentEntity])],
   controllers: [AdminController],
   providers: [AdminService, CryptoService, TokenService],
   exports: [AdminService]

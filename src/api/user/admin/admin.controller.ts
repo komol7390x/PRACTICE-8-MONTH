@@ -98,7 +98,18 @@ export class AdminController {
         updatedAt: true,
       },
     });
+  }  // --------------------- DASHBOARD ---------------------
+
+  @Get('dashboard')
+
+  @ApiOperation({ summary: 'dashboard for super admin' })
+  @AccessRoles(Roles.SUPER_ADMIN)
+  @AccessRoles('public')
+
+  getDashboard() {
+    return this.adminService.getDashboard()
   }
+
   // --------------------- ADMIN ONE ---------------------
 
   @Get('details')
@@ -145,7 +156,19 @@ export class AdminController {
   updatePassword(@Body() dto: UpdatePasswordDto, @CurrentUser() user: IToken) {
     return this.adminService.updatePassword(user.id, dto);
   }
+  // ---------------------  IS ACTIVE ---------------------
 
+  @Patch('is-active/:id')
+
+  @ApiOperation({ summary: 'for super admin' })
+  @AccessRoles(Roles.SUPER_ADMIN)
+
+  isActive(
+    @Param('id') id: number,
+    @Query('active') active: boolean
+  ) {
+    return this.adminService.updateStatus(id, active);
+  }
   // --------------------- SOFT DELETE ---------------------
 
   @Patch('soft-delete/:id')
@@ -166,4 +189,5 @@ export class AdminController {
   delete(@Param('id') id: number) {
     return this.adminService.delete(id);
   }
+
 }

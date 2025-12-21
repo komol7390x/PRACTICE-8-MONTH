@@ -5,30 +5,30 @@ import { UpdateDeleteUserDto } from './dto/update-delete-user.dto';
 
 @Controller('delete-user')
 export class DeleteUserController {
-  constructor(private readonly deleteUserService: DeleteUserService) {}
+  constructor(private readonly deleteUserService: DeleteUserService) { }
 
   @Post()
-  create(@Body() createDeleteUserDto: CreateDeleteUserDto) {
-    return this.deleteUserService.create(createDeleteUserDto);
+  create(@Body() dto: CreateDeleteUserDto) {
+    return this.deleteUserService.createDeleteUser(dto);
   }
 
   @Get()
   findAll() {
-    return this.deleteUserService.findAll();
+    return this.deleteUserService.findAllDeleteUser();
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.deleteUserService.findOne(+id);
+    return this.deleteUserService.findOneDeleteUser(+id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDeleteUserDto: UpdateDeleteUserDto) {
-    return this.deleteUserService.update(+id, updateDeleteUserDto);
+  update(@Param('id') id: string, @Body() dto: UpdateDeleteUserDto) {
+    return this.deleteUserService.updateDeleteUser(+id, dto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.deleteUserService.remove(+id);
+    return this.deleteUserService.removeDeleteUser(+id);
   }
 }

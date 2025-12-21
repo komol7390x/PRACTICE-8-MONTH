@@ -98,12 +98,12 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
     return successRes({ isDelete: data?.isDeleted });
   }
   // ---------------- UPDATE STATUS ----------------
-  async updateStatus(id: string | number): Promise<IResponse> {
+  async updateStatus(id: string | number, active: boolean): Promise<IResponse> {
     const user = await this.repository.findOne({ where: { id } });
     if (!user) {
       throw new HttpException('User not found', 404);
     }
-    user.isActive = !user.isActive;
+    user.isActive = active;
     const data = await this.repository.save(user);
     return successRes({ isActive: data?.isActive });
   }
