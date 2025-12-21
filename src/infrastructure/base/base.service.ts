@@ -64,7 +64,7 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
       where: { id, ...options?.where },
     })) as unknown as Entity;
     if (!data) {
-      throw new NotFoundException();
+      throw new NotFoundException(`${id} not found`);
     }
     return successRes(data);
   }
@@ -107,4 +107,5 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
     const data = await this.repository.save(user);
     return successRes({ isActive: data?.isActive });
   }
+
 }

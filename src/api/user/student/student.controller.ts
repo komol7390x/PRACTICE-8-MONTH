@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, ParseIntPipe } from '@nestjs/common';
 import { StudentService } from './student.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
@@ -59,43 +59,55 @@ export class StudentController {
     @Param('id') id: string) {
     return this.studentService.findOneStudent(+id, user);
   }
-  // --------------------- ADMIN ONE ---------------------
+  // --------------------- STUDENT DETAILS ONE ---------------------
 
-  @Get('details')
+  @Get('details/:id')
 
   @ApiOperation({ summary: 'for student' })
-  @AccessRoles(Roles.ADMIN, Roles.SUPER_ADMIN)
+  @AccessRoles(Roles.STUDENT, 'ID')
 
   getDetails(
+    @Param('id', ParseIntPipe) id: number,
     @CurrentUser() user: IToken) {
-    return this.studentService.findOneStudent(user.id, user);
+    return this.studentService.findOneStudent(id, user);
   }
   // --------------------- UPDATE ---------------------
 
   @Patch('update/:id')
+
+  @ApiOperation({ summary: 'for super admin' })
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, Roles.STUDENT)
+
   update(
     @CurrentUser() user: IToken,
     @Param('id') id: string, @Body() dto: UpdateStudentDto) {
     return this.studentService.updateStudent(+id, dto, user);
   }
-  // ---------------------  IS ACTIVE ---------------------
+  // --------------------- IS ACTIVE ---------------------
 
   @Patch('is-active/:id')
 
   @ApiOperation({ summary: 'for super admin' })
-  @AccessRoles(Roles.SUPER_ADMIN)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
 
   isActive(
     @Param('id') id: number,
-    @Query('active') active: boolean
+    @Query('active') active: boolean,
+    @Body() dto: UpdateStudentDto
   ) {
-    return this.studentService.updateStatus(id, active);
+    return this.studentService.blockedStudent(id, active, dto);
+  }
+  // --------------------- SOFT DELETE ---------------------
+
+  @Patch('soft-delete/:id')
+  softDelete(@Param('id') id: string) {
+    return this.studentService.softDelete(+id);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.studentService.removeStudent(+id);
+  // --------------------- SOFT DELETE ---------------------
+
+  @Delete('delete/:id')
+  delete(@Param('id') id: string) {
+    return this.studentService.delete(+id);
   }
-
-
 }

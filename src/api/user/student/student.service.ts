@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { BaseService } from 'src/infrastructure/base/base.service';
@@ -93,11 +93,14 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
     };
   }
 
-
+  // --------------------- FIND ONE STUDENT ---------------------
 
   async findOneStudent(id: number, user: IToken) {
+    if (isNaN(id)) {
+      throw new BadRequestException('id type is NaN is not true')
+    }
     if (user.role == Roles.SUPER_ADMIN) {
-      const student = await this.studentRepository.findOne({ where: { id, role: user.role } })
+      const student = await this.studentRepository.findOne({ where: { id: user.id, role: user.role } })
       if (!student) {
         throw new NotFoundException(`${id} id student not found`)
       }
@@ -114,14 +117,39 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
     return successRes({ ...data })
 
   }
-
+  // -------------------- UPDATE STUDENT --------------------
   async updateStudent(id: number, dto: UpdateStudentDto, user: IToken) {
-    const { firstName, lastName, phoneNumber, tgUsername, tgId, blockedAt, blockedReason } = dto
+    const { firstName, lastName, phoneNumber, tgUsername, tgId } = dto
     const student = await this.studentRepository.findOne({ where: { id, isDeleted: true } })
 
+    if (!student) {
+      throw new NotFoundException(`${id} not found on Student`)
+    }
+    if (user.role == Roles.ADMIN || user.role == Roles.STUDENT) {
+      await this.studentRepository.update({ id }, {
+        firstName: firstName ?? student.firstName,
+        lastName: lastName ?? student.lastName,
+      })
+      return this.findOneStudent(id, user)
+    }
+
+    if (user.role == Roles.SUPER_ADMIN) {
+      await this.studentRepository.update({ id }, {
+        firstName: firstName ?? student.firstName,
+        lastName: lastName ?? student.lastName,
+        phoneNumber: phoneNumber ?? student.phoneNumber,
+        tgUsername: tgUsername ?? student.tgUsername,
+        tgId: tgId ?? student.tgId
+      })
+      return this.findOneStudent(id, user)
+    }
   }
 
-  async removeStudent(id: number) {
-    return `This action removes a #${id} student`;
+  async blockedStudent(id: number, blocked: boolean, dto: UpdateStudentDto) {
+    const { blockedReason } = dto
+    await this.findOneById(id)
+    const blockedAt = new Date
+    await this.studentRepository.update({ id }, { blockedAt })
+
   }
 }

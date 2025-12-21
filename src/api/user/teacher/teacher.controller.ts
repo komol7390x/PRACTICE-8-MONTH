@@ -7,7 +7,7 @@ import { UpdateTeacherDto } from './dto/update-teacher.dto';
 export class TeacherController {
   constructor(private readonly teacherService: TeacherService) { }
 
-  // --------------------- CREATE ADMIN ---------------------
+  // --------------------- CREATE TEACHER ---------------------
   @Post('create-teacher')
   createTeacher(@Body() dto: CreateTeacherDto) {
     return this.teacherService.create(dto);

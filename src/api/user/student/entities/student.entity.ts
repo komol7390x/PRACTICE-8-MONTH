@@ -22,7 +22,7 @@ export class StudentEntity extends BaseEntity {
     @Column({ type: 'varchar', unique: true })
     tgUsername: string
 
-    @Column({ type: 'date', nullable: true })
+    @Column({ type: 'timestamptz', nullable: true, })
     blockedAt: Date
 
     @Column({ type: 'varchar', nullable: true })
