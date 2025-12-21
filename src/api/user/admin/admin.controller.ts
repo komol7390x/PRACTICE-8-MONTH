@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res, Query, ParseIntPipe } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
@@ -141,7 +141,7 @@ export class AdminController {
   @AccessRoles(Roles.SUPER_ADMIN, 'ID')
 
   updateDetails(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateAdminDto,
     @CurrentUser() user: IToken) {
     return this.adminService.updateAdmin(id, dto, user);
@@ -164,7 +164,7 @@ export class AdminController {
   @AccessRoles(Roles.SUPER_ADMIN)
 
   isActive(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Query('active') active: boolean
   ) {
     return this.adminService.updateStatus(id, active);
@@ -176,7 +176,7 @@ export class AdminController {
   @ApiOperation({ summary: 'for super admin' })
   @AccessRoles(Roles.SUPER_ADMIN)
 
-  softDelete(@Param('id') id: number) {
+  softDelete(@Param('id', ParseIntPipe) id: number) {
     return this.adminService.softDelete(id);
   }
   // ---------------------  DELETE ---------------------
@@ -186,7 +186,7 @@ export class AdminController {
   @ApiOperation({ summary: 'for super admin' })
   @AccessRoles(Roles.SUPER_ADMIN)
 
-  delete(@Param('id') id: number) {
+  delete(@Param('id', ParseIntPipe) id: number) {
     return this.adminService.delete(id);
   }
 
