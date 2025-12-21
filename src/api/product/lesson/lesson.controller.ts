@@ -5,7 +5,7 @@ import { UpdateLessonDto } from './dto/update-lesson.dto';
 
 @Controller('lesson')
 export class LessonController {
-  constructor(private readonly lessonService: LessonService) {}
+  constructor(private readonly lessonService: LessonService) { }
 
   @Post()
   create(@Body() createLessonDto: CreateLessonDto) {
@@ -19,7 +19,7 @@ export class LessonController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.lessonService.findOne(+id);
+    return this.lessonService.findOneLesson(+id);
   }
 
   @Patch(':id')
@@ -29,6 +29,6 @@ export class LessonController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.lessonService.remove(+id);
+    return this.lessonService.removeLesson(+id);
   }
 }

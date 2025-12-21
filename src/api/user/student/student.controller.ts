@@ -8,8 +8,8 @@ export class StudentController {
   constructor(private readonly studentService: StudentService) {}
 
   @Post()
-  create(@Body() createStudentDto: CreateStudentDto) {
-    return this.studentService.create(createStudentDto);
+  create(@Body() dto: CreateStudentDto) {
+    return this.studentService.create(dto);
   }
 
   @Get()
@@ -19,16 +19,16 @@ export class StudentController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.studentService.findOne(+id);
+    return this.studentService.findOneStudent(+id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateStudentDto: UpdateStudentDto) {
-    return this.studentService.update(+id, updateStudentDto);
+  update(@Param('id') id: string, @Body() dto: UpdateStudentDto) {
+    return this.studentService.update(+id, dto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.studentService.remove(+id);
+    return this.studentService.removeStudent(+id);
   }
 }

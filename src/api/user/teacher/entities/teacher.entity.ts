@@ -27,4 +27,13 @@ export class TeacherEntity extends BaseEntity {
 
     @Column({ type: 'int', nullable: true, default: 0 })
     rating: number
+
+    @Column({ type: 'smallint', default: 1 })
+    expirence: number
+
+    @Column({ type: 'int' })
+    specificationId: number
+
+    @Column({ type: 'int', nullable: true })
+    googleId: number
 }

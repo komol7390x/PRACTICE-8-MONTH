@@ -16,6 +16,13 @@ import { StatisticaModule } from './api/product/statistica/statistica.module';
 import { CertificateModule } from './api/product/certificate/certificate.module';
 import { AuthModule } from './api/user/auth/auth.module';
 import { EducationModule } from './api/post/education/education.module';
+import { GoogleModule } from './api/product/google/google.module';
+import { LessonTemplateModule } from './api/product/lesson-template/lesson-template.module';
+import { DeleteUserModule } from './api/product/delete-user/delete-user.module';
+import { TeacherPaymentModule } from './api/product/teacher-payment/teacher-payment.module';
+import { TransactionModule } from './api/product/transaction/transaction.module';
+import { LessonHistoryModule } from './api/product/lesson-history/lesson-history.module';
+import { NotificationModule } from './api/product/notification/notification.module';
 
 @Module({
     imports: [
@@ -68,6 +75,13 @@ import { EducationModule } from './api/post/education/education.module';
         CertificateModule,
         AuthModule,
         EducationModule,
+        GoogleModule,
+        LessonTemplateModule,
+        DeleteUserModule,
+        TeacherPaymentModule,
+        TransactionModule,
+        LessonHistoryModule,
+        NotificationModule,
     ],
     controllers: [],
     providers: [],
