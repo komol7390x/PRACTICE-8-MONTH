@@ -5,18 +5,18 @@ export class SigninTeacherDto {
     @ApiProperty({
         type: String,
         description: 'teacher email',
-        example: 'wwww.example@gmail.com',
+        example: 'teacher2@mail.com',
     })
     @IsString({ message: 'is must string' })
     @IsEmail()
     @IsNotEmpty()
-    username: string;
+    email: string;
 
     @ApiProperty({
         type: String,
         description:
             'Mustahkam parol: kamida 8 ta belgi, 1 ta katta harf, 1 ta kichik harf, 1 ta raqam va 1 ta maxsus belgi bolishi kerak',
-        example: 'Admin123!@',
+        example: 'StrongPassword123',
     })
     @IsString({ message: 'password satr (string) bolishi kerak' })
     @IsNotEmpty({ message: "password bo'sh bo'lmasligi kerak" })

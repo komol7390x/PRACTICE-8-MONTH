@@ -19,7 +19,7 @@ export class CreateTeacherDto {
     @ApiPropertyOptional({ example: 'Ali Valiyev' })
     @IsOptional()
     @IsString()
-    fullName?: string
+    fullname?: string
 
     @ApiProperty({ example: 'StrongPassword123' })
     @IsString()

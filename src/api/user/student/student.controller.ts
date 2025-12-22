@@ -20,7 +20,7 @@ export class StudentController {
   // --------------------- CREATE STUDENT ---------------------
   @Post('crate-student')
 
-  @ApiOperation({ summary: 'public' })
+  @ApiOperation({ summary: 'registration student' })
   @AccessRoles('public')
 
   create(@Body() dto: CreateStudentDto) {

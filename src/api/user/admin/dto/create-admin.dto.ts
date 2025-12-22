@@ -33,9 +33,9 @@ export class CreateAdminDto {
         maxLength: 50,
         required: true,
     })
-    @IsString({ message: 'fullName satr (string) bolishi kerak' })
-    @Length(2, 50, { message: 'fullName uzunligi 2 dan 50 gacha bolishi kerak' })
-    fullName!: string;
+    @IsString({ message: 'fullname satr (string) bolishi kerak' })
+    @Length(2, 50, { message: 'fullname uzunligi 2 dan 50 gacha bolishi kerak' })
+    fullname!: string;
 
     @ApiProperty({
         type: String,

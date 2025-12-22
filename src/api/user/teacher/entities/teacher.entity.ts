@@ -13,7 +13,7 @@ export class TeacherEntity extends BaseEntity {
     phoneNumber: string
 
     @Column({ type: 'varchar', nullable: true })
-    fullName: string
+    fullname: string
 
     @Column({ type: 'varchar' })
     password: string
@@ -35,9 +35,6 @@ export class TeacherEntity extends BaseEntity {
 
     @Column({ type: 'smallint', default: 1 })
     expirence: number
-
-    @Column({ type: 'int', nullable: true })
-    specificationId: number
 
     @OneToMany(() => GoogleEntity, (google) => google.teacher)
     googles: GoogleEntity[];

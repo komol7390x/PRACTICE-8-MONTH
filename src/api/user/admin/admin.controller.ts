@@ -92,7 +92,7 @@ export class AdminController {
       select: {
         id: true,
         username: true,
-        fullName: true,
+        fullname: true,
         role: true,
         createdAt: true,
         updatedAt: true,
@@ -126,7 +126,7 @@ export class AdminController {
         isDeleted: true,
         id: true,
         username: true,
-        fullName: true,
+        fullname: true,
         role: true,
         createdAt: true,
         updatedAt: true,

@@ -11,6 +11,8 @@ import { type Response } from 'express';
 import { ApiPagination } from './swagger/teacher-swagger';
 import { Roles } from 'src/common/enum/roles.enum';
 import { LanguageLevel, TeacherSort, TeacherStatus } from './enum/teacher-enum';
+import { CurrentUser } from 'src/common/decorator/currentUser.decorator';
+import { type IToken } from 'src/infrastructure/token/interface';
 
 @Controller('teacher')
 @UseGuards(AuthGuard, RolesGuard)
@@ -23,17 +25,26 @@ export class TeacherController {
   @ApiOperation({ summary: 'registration teacher' })
   @AccessRoles('public')
 
-  createTeacher(@Body() dto: CreateTeacherDto) {
-    return this.teacherService.create(dto);
+  registration(@Body() dto: CreateTeacherDto) {
+    return this.teacherService.createTeacher(dto);
   }
   // --------------------- SIGN IN TEACHER ---------------------
   @Post('signin')
 
-  @ApiOperation({ summary: 'public' })
+  @ApiOperation({ summary: 'Sign in Teacher' })
   @AccessRoles('public')
 
   signIn(@Body() dto: SigninTeacherDto, @Res({ passthrough: true }) res: Response) {
-    // return this.adminService.signIn(dto, res);
+    return this.teacherService.signIn(dto, res);
+  }
+
+  // --------------------- SIGN IN TEACHER ---------------------
+  @Post('singOut')
+
+  @ApiOperation({ summary: 'Sign Out' })
+  @AccessRoles(Roles.TEACHER)
+  signout(@Res({ passthrough: true }) res: Response) {
+    return this.teacherService.singOut(res);
   }
 
   // --------------------- GET ALL TEACHER ---------------------
@@ -42,7 +53,7 @@ export class TeacherController {
 
   @ApiPagination()
   @ApiOperation({ summary: 'get all teacher' })
-  @AccessRoles(Roles.SUPER_ADMIN, Roles.STUDENT)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
 
   findAll(
     @Query('page') page?: string,
@@ -52,40 +63,90 @@ export class TeacherController {
     @Query('level') level?: LanguageLevel,
     @Query('sort') sort?: TeacherSort,
     @Query('lang') lang?: string,
-  ) {    
+  ) {
+
     let pageNumber = page ? parseInt(page, 10) : 1;
     let limitNumber = limit ? parseInt(limit, 10) : 100;
 
     if (limitNumber < 1) limitNumber = 1;
     if (limitNumber > 100) limitNumber = 100;
     pageNumber = pageNumber < 1 ? 1 : pageNumber;
-    
+
     return this.teacherService.findAllTeacher(
       pageNumber,
       limitNumber,
       search,
       status,
-      level, 
-      sort, 
+      level,
+      sort,
       lang
     );
   }
-  // --------------------- CREATE TEACHER ---------------------
+  // --------------------- GET ME ---------------------
+
+  @Get('details')
+
+  @ApiOperation({ summary: 'for Teacher details' })
+  @AccessRoles(Roles.TEACHER)
+
+  getDetails(@CurrentUser() user: IToken) {
+    return this.teacherService.findOneTeacher(user.id)
+  }
+  // --------------------- FIND ONE ---------------------
 
   @Get(':id')
+
+  @ApiOperation({ summary: 'get one teacher' })
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, 'ID')
+
   findOne(@Param('id') id: string) {
-    return this.teacherService.findOneById(+id);
+    return this.teacherService.findOneTeacher(+id);
   }
-  // --------------------- CREATE TEACHER ---------------------
+  // --------------------- IS ACTIVE ---------------------
+
+  @Patch('is-active/:id')
+
+  @ApiOperation({ summary: 'blocked teacher by admin and super admin' })
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
+
+  isActive(
+    @Param('id') id: number,
+    @Query('active') active: boolean,
+  ) {
+    return this.teacherService.blockedStudent(id, active);
+  }
+  
+  // --------------------- UPDATE ---------------------
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateTeacherDto) {
-    return this.teacherService.update(+id, dto);
-  }
-  // --------------------- CREATE TEACHER ---------------------
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
+  @ApiOperation({ summary: 'get one teacher' })
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, 'ID')
+
+  update(@Param('id') id: string, @Body() dto: UpdateTeacherDto, @CurrentUser() user: IToken) {
+    return this.teacherService.updateTeacher(+id, dto, user);
+  }
+  // --------------------- SOFT DELETE ---------------------
+
+  @Delete('soft-delete/:id')
+
+  @ApiOperation({ summary: 'soft delete teacher' })
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
+
+  softDelete(@Param('id') id: string) {
+    return this.teacherService.softDelete(+id);
+  }
+  // --------------------- HARD DELETE ---------------------
+
+  @Delete('delete/:id')
+
+  @ApiOperation({ summary: 'delete teacher' })
+  @AccessRoles(Roles.SUPER_ADMIN)
+
+  hardDelete(@Param('id') id: string) {
     return this.teacherService.delete(+id);
   }
+
+  
+
 }

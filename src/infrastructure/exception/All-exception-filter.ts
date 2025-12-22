@@ -109,7 +109,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
         `CLIENT ERROR | Country: ${country} | ${JSON.stringify(errorLog)}`,
       );
     }
-    // console.log(exception)
     // Clientga javob
     const responseBody = {
       statusCode: httpStatus,

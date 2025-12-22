@@ -19,7 +19,7 @@ export class TokenService {
     res.cookie(key, value, {
       httpOnly: true,
       secure: true,
-      sameSite: 'none',
+      sameSite: 'strict',
       maxAge: time * 24 * 60 * 60 * 1000,
       path: '/',
     });

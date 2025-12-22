@@ -90,7 +90,6 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
     if (!user) {
       throw new HttpException('User not found', 404);
     }
-    console.log('user', user);
     user.isDeleted = true;
     user.isActive = false
 

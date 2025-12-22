@@ -8,7 +8,7 @@ export class AdminEntity extends BaseEntity {
     username: string;
 
     @Column({ type: 'varchar', })
-    fullName: string;
+    fullname: string;
 
     @Column({ type: 'varchar' })
     password: string;

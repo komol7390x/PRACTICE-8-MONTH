@@ -43,7 +43,7 @@ export class AdminService
       const data = this.adminRepo.create({
         username: appConfig.SUPER_ADMIN.USERNAME,
         password,
-        fullName: appConfig.SUPER_ADMIN.FULLNAME,
+        fullname: appConfig.SUPER_ADMIN.FULLNAME,
         role: Roles.SUPER_ADMIN,
       });
       await this.adminRepo.save(data);
@@ -119,7 +119,7 @@ export class AdminService
       take: limit,
       select: {
         id: true,
-        fullName: true,
+        fullname: true,
         createdAt: true,
         username: true,
         role: true,
@@ -134,7 +134,7 @@ export class AdminService
 
   async updateAdmin(id: number, dto: UpdateAdminDto, user: IToken): Promise<IResponse> {
 
-    const { fullName, username, password } = dto
+    const { fullname, username, password } = dto
 
     const admin = await this.adminRepo.findOne({ where: { id } });
 
@@ -153,7 +153,7 @@ export class AdminService
       newPassword = await this.crypto.encrypt(password);
     }
 
-    await this.adminRepo.update({ id }, { fullName, username, password: newPassword });
+    await this.adminRepo.update({ id }, { fullname, username, password: newPassword });
     const updated = await this.adminRepo.findOne({ where: { id } });
 
     return successRes(updated);
@@ -179,6 +179,10 @@ export class AdminService
       role: admin.role,
     };
     const accessToken = await this.tokenService.accessToken(payload);
+    
+    res.clearCookie(TokenName.TEACHER_TOKEN)
+    res.clearCookie(TokenName.ADMIN_TOKEN)
+    res.clearCookie(TokenName.STUDENT_TOKEN)
 
     await this.tokenService.writeCookie(res, TokenName.ADMIN_TOKEN, accessToken, 30);
 
@@ -187,7 +191,7 @@ export class AdminService
       user: {
         id: admin.id,
         username: admin.username,
-        fullName: admin.fullName,
+        fullname: admin.fullname,
         role: admin.role,
         createdAt: admin.createdAt,
         updatedAt: admin.updatedAt,
