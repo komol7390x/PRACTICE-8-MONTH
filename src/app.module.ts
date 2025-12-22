@@ -21,13 +21,14 @@ import { TeacherPaymentModule } from './api/product/teacher-payment/teacher-paym
 import { TransactionModule } from './api/product/transaction/transaction.module';
 import { LessonHistoryModule } from './api/product/lesson-history/lesson-history.module';
 import { NotificationModule } from './api/product/notification/notification.module';
+import { AuthModule2 } from './api/user/auth2/auth.module';
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
         }),
-        
+
         ServeStaticModule.forRoot({
             rootPath: join(process.cwd(), 'uploads'),
             serveRoot: '/uploads',
@@ -71,6 +72,7 @@ import { NotificationModule } from './api/product/notification/notification.modu
         StatisticaModule,
         CertificateModule,
         // AuthModule,
+        AuthModule2, //auth2
         GoogleModule,
         LessonTemplateModule,
         DeleteUserModule,
