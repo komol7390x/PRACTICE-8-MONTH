@@ -27,6 +27,7 @@ interface IConfig {
     HOST: string,
     PASS: string
   },
+  FRONT_URL: string,
   GOOGLE: {
     ID: String,
     SECRET_KEY: String,
@@ -45,6 +46,7 @@ export const appConfig: IConfig = {
   SWAGGER: {
     PASSWORD: String(process.env.SWAGGER_PASSWORD),
   },
+  FRONT_URL: String(process.env.FRONT_URL),
   TOKEN: {
     ACCESS_TOKEN_KEY: String(process.env.TOKEN_ACCESS_TOKEN_KEY),
     ACCESS_TOKEN_TIME: Number(process.env.TOKEN_ACCESS_TOKEN_TIME),

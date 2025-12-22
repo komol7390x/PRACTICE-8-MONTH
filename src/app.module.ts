@@ -13,7 +13,7 @@ import { PaymentModule } from './api/product/payment/payment.module';
 import { ScheduleModule } from './api/product/schedule/schedule.module';
 import { StatisticaModule } from './api/product/statistica/statistica.module';
 import { CertificateModule } from './api/product/certificate/certificate.module';
-import { AuthModule } from './api/user/auth/auth.module';
+// import { AuthModule } from './api/user/auth/auth.module';
 import { GoogleModule } from './api/product/google/google.module';
 import { LessonTemplateModule } from './api/product/lesson-template/lesson-template.module';
 import { DeleteUserModule } from './api/product/delete-user/delete-user.module';
@@ -70,7 +70,7 @@ import { NotificationModule } from './api/product/notification/notification.modu
         ScheduleModule,
         StatisticaModule,
         CertificateModule,
-        AuthModule,
+        // AuthModule,
         GoogleModule,
         LessonTemplateModule,
         DeleteUserModule,
