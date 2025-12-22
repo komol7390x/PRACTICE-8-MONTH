@@ -10,7 +10,7 @@ import { SigninTeacherDto } from './dto/signin-teacher.dto';
 import { type Response } from 'express';
 import { ApiPagination } from './swagger/teacher-swagger';
 import { Roles } from 'src/common/enum/roles.enum';
-import { TeacherSort, TeacherStatus } from './enum/teacher-enum';
+import { LanguageLevel, TeacherSort, TeacherStatus } from './enum/teacher-enum';
 
 @Controller('teacher')
 @UseGuards(AuthGuard, RolesGuard)
@@ -45,22 +45,30 @@ export class TeacherController {
   @AccessRoles(Roles.SUPER_ADMIN, Roles.STUDENT)
 
   findAll(
-    @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
-    @Query('level') level?: string,
-    @Query('lang') lang?: string,
+    @Query('search') search?: string,
     @Query('status') status?: TeacherStatus,
+    @Query('level') level?: LanguageLevel,
     @Query('sort') sort?: TeacherSort,
-  ) {
-
+    @Query('lang') lang?: string,
+  ) {    
     let pageNumber = page ? parseInt(page, 10) : 1;
     let limitNumber = limit ? parseInt(limit, 10) : 100;
 
     if (limitNumber < 1) limitNumber = 1;
     if (limitNumber > 100) limitNumber = 100;
-    pageNumber = pageNumber < 1 ? 1 : pageNumber
-    return this.teacherService.findAllTeacher(pageNumber, limitNumber, search, status, sort, level, lang);
+    pageNumber = pageNumber < 1 ? 1 : pageNumber;
+    
+    return this.teacherService.findAllTeacher(
+      pageNumber,
+      limitNumber,
+      search,
+      status,
+      level, 
+      sort, 
+      lang
+    );
   }
   // --------------------- CREATE TEACHER ---------------------
 

@@ -13,9 +13,8 @@ export enum LanguageLevel {
 }
 
 export enum TeacherSort {
-    NAME = 'name',
+    FULLNAME = 'fullname',
     EMAIL = 'email',
     RATING = 'rating',
-    PRICE = 'price',
     CREATED_AT = 'createdAt',
 }
