@@ -23,7 +23,7 @@ export class TeacherEntity extends BaseEntity {
     @Column({ type: 'varchar', nullable: true })
     googleAccessToken: string | null
 
-    @Column({ type: 'varchar',nullable:true })
+    @Column({ type: 'varchar', nullable: true })
     password?: string
 
     @Column({ type: 'varchar', nullable: true })
@@ -40,9 +40,6 @@ export class TeacherEntity extends BaseEntity {
 
     @Column({ type: 'int', nullable: true, default: 0 })
     rating: number
-
-    @Column({ type: 'varchar', nullable: true })
-    step: string
 
     @Column({ type: 'smallint', default: 1, nullable: true })
     expirence: number

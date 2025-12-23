@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Strategy, VerifyCallback, StrategyOptions } from 'passport-google-oauth20';
+import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TeacherEntity } from '../../teacher/entities/teacher.entity';
 import { Repository } from 'typeorm';
@@ -60,7 +60,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
                 googleId,
                 googleAccessToken: accessToken,
                 googleRefreshToken: refreshToken ?? undefined,
-                step: '2'
+                isActive: false
             }))
 
             const user = {
@@ -69,9 +69,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
                     name: newUser?.fullname,
                     googleId: newUser.googleId,
                     email: newUser.email,
-                    isActive: newUser.isActive
                 },
-                step: newUser.step,
+                step: 2,
                 message: 'Step 1 completed. Please provide phone number and password.',
             }
             return done(null, user);
@@ -108,7 +107,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
                     id: findUser.id,
                     name: findUser.fullname,
                     email: findUser.email,
-                    isActive: findUser.isActive
                 },
                 step: 2,
                 message: 'Registration incomplete. Please complete step 2.',
@@ -118,11 +116,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 
         if (!findUser.isActive) {
             done(null, {
-                user: {
+                item: {
                     id: findUser.id,
                     name: findUser.fullname,
                     email: findUser.email,
-                    isActive: findUser.isActive
                 },
                 step: 'inactive',
                 message:
@@ -135,7 +132,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
                 id: findUser.id,
                 name: findUser.fullname,
                 email: findUser.email,
-                isActive: findUser.isActive
             },
             step: 'completed',
             message: 'Teacher logged in successfully',

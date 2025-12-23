@@ -1,24 +1,37 @@
 import { Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { type Response } from 'express';
+import { Roles } from 'src/common/enum/roles.enum';
+import { TokenName } from 'src/common/enum/token-name';
 import { appConfig } from 'src/config';
+import { TokenService } from 'src/infrastructure/token/Token';
 
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService) { }
+    constructor(private readonly tokenService: TokenService,) { }
 
-  async login(user: any) {
-    const payload = { sub: user.googleId, email: user.email };
+    async validateGoogleUser(googleUser: any) {
+        return googleUser;
+    }
 
-    return {
-      access_token: this.jwtService.sign(payload, { secret: appConfig.GOOGLE.JWT_SECRET as string }),
-      user: {
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        picture: user.picture,
-        phone: user.phone,
-        calendarEvents: user.calendarEvents,
-      },
-    };
-  }
+    async generateTokens(id: number, res: Response) {
+        console.log(200001);
+
+        const payload = {
+            id, role: Roles.TEACHER, isActive: true
+        }
+        console.log(1111);
+
+        const accessToken = await this.tokenService.accessToken(payload)
+        console.log(222);
+
+        res.clearCookie(TokenName.ADMIN_TOKEN)
+        res.clearCookie(TokenName.TEACHER_TOKEN)
+        res.clearCookie(TokenName.STUDENT_TOKEN)
+
+        return this.tokenService.writeCookie(
+            res,
+            TokenName.TEACHER_TOKEN,
+            accessToken,
+            appConfig.TOKEN.ACCESS_TOKEN_TIME)
+    }
 }

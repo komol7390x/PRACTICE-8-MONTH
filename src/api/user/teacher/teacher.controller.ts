@@ -1,11 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res, Query, ParseIntPipe } from '@nestjs/common';
 import { TeacherService } from './teacher.service';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import { AuthGuard } from 'src/common/guard/AuthGuard';
 import { RolesGuard } from 'src/common/guard/RolesGuard';
 import { AccessRoles } from 'src/common/decorator/roles.decorator';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { SigninTeacherDto } from './dto/signin-teacher.dto';
 import { type Response } from 'express';
 import { ApiPagination } from './swagger/teacher-swagger';
@@ -13,6 +13,7 @@ import { Roles } from 'src/common/enum/roles.enum';
 import { LanguageLevel, TeacherSort, TeacherStatus } from './enum/teacher-enum';
 import { CurrentUser } from 'src/common/decorator/currentUser.decorator';
 import { type IToken } from 'src/infrastructure/token/interface';
+import { RegisterStep2Dto } from './dto/register-step2';
 
 @Controller('teacher')
 @UseGuards(AuthGuard, RolesGuard)
@@ -25,14 +26,39 @@ export class TeacherController {
   @ApiOperation({ summary: 'registration teacher' })
   @AccessRoles('public')
 
-  registration(@Body() dto: CreateTeacherDto) {
+  createTeacher(@Body() dto: CreateTeacherDto) {
     return this.teacherService.createTeacher(dto);
   }
+
+  // --------------------- REGISTER STEP-2 TEACHER ---------------------
+  @Post('register-step2/:id')
+  @AccessRoles(Roles.TEACHER, 'ID')
+
+  @ApiOperation({ summary: 'registration teacher step ' })
+
+  registrationStep2(@Body() dto: RegisterStep2Dto, @Param('id', ParseIntPipe) id: number) {
+    return this.teacherService.registrationStep2(id, dto);
+  }
+
+  // --------------------- REGISTER STEP-3 TEACHER ---------------------
+
+  @Post('register-step3/:id')
+  @AccessRoles(Roles.TEACHER, 'ID')
+
+  @ApiOperation({ summary: 'registration teacher step ' })
+  @ApiQuery({ name: 'otp', type: Number, example: 123456 })
+
+  registrationStep3(
+    @Query('otp', ParseIntPipe) otp: number,
+    @Param('id', ParseIntPipe) id: number) {
+    return this.teacherService.registrationStep3(id, otp);
+  }
+  
   // --------------------- SIGN IN TEACHER ---------------------
   @Post('signin')
+  @AccessRoles('public')
 
   @ApiOperation({ summary: 'Sign in Teacher' })
-  @AccessRoles('public')
 
   signIn(@Body() dto: SigninTeacherDto, @Res({ passthrough: true }) res: Response) {
     return this.teacherService.signIn(dto, res);
@@ -40,9 +66,10 @@ export class TeacherController {
 
   // --------------------- SIGN IN TEACHER ---------------------
   @Post('singOut')
+  @AccessRoles(Roles.TEACHER)
 
   @ApiOperation({ summary: 'Sign Out' })
-  @AccessRoles(Roles.TEACHER)
+
   signout(@Res({ passthrough: true }) res: Response) {
     return this.teacherService.singOut(res);
   }
@@ -99,7 +126,7 @@ export class TeacherController {
   @ApiOperation({ summary: 'get one teacher' })
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, 'ID')
 
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.teacherService.findOneTeacher(+id);
   }
   // --------------------- IS ACTIVE ---------------------
@@ -110,12 +137,12 @@ export class TeacherController {
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
 
   isActive(
-    @Param('id') id: number,
+    @Param('id', ParseIntPipe) id: number,
     @Query('active') active: boolean,
   ) {
     return this.teacherService.blockedStudent(id, active);
   }
-  
+
   // --------------------- UPDATE ---------------------
 
   @Patch(':id')
@@ -123,7 +150,7 @@ export class TeacherController {
   @ApiOperation({ summary: 'get one teacher' })
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, 'ID')
 
-  update(@Param('id') id: string, @Body() dto: UpdateTeacherDto, @CurrentUser() user: IToken) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateTeacherDto, @CurrentUser() user: IToken) {
     return this.teacherService.updateTeacher(+id, dto, user);
   }
   // --------------------- SOFT DELETE ---------------------
@@ -133,7 +160,7 @@ export class TeacherController {
   @ApiOperation({ summary: 'soft delete teacher' })
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
 
-  softDelete(@Param('id') id: string) {
+  softDelete(@Param('id', ParseIntPipe) id: number) {
     return this.teacherService.softDelete(+id);
   }
   // --------------------- HARD DELETE ---------------------
@@ -143,10 +170,10 @@ export class TeacherController {
   @ApiOperation({ summary: 'delete teacher' })
   @AccessRoles(Roles.SUPER_ADMIN)
 
-  hardDelete(@Param('id') id: string) {
+  hardDelete(@Param('id', ParseIntPipe) id: number) {
     return this.teacherService.delete(+id);
   }
 
-  
+
 
 }

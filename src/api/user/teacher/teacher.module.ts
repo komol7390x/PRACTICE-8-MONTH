@@ -6,11 +6,12 @@ import { TeacherEntity } from './entities/teacher.entity';
 import { CertificateEntity } from 'src/api/product/certificate/entities/certificate.entity';
 import { TokenService } from 'src/infrastructure/token/Token';
 import { CryptoService } from 'src/infrastructure/crypto/crypto.service';
+import { CustomCacheService } from 'src/infrastructure/cashe-service/nest-cashe-service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([TeacherEntity, CertificateEntity])],
   controllers: [TeacherController],
-  providers: [TeacherService, TokenService, CryptoService],
+  providers: [TeacherService, TokenService, CryptoService, CustomCacheService],
   exports: [TeacherService]
 })
 export class TeacherModule { }

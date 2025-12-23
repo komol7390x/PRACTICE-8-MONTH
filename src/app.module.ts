@@ -13,14 +13,13 @@ import { PaymentModule } from './api/product/payment/payment.module';
 import { ScheduleModule } from './api/product/schedule/schedule.module';
 import { StatisticaModule } from './api/product/statistica/statistica.module';
 import { CertificateModule } from './api/product/certificate/certificate.module';
-// import { AuthModule } from './api/user/auth/auth.module';
 import { LessonTemplateModule } from './api/product/lesson-template/lesson-template.module';
 import { DeleteUserModule } from './api/product/delete-user/delete-user.module';
 import { TeacherPaymentModule } from './api/product/teacher-payment/teacher-payment.module';
 import { TransactionModule } from './api/product/transaction/transaction.module';
 import { LessonHistoryModule } from './api/product/lesson-history/lesson-history.module';
 import { NotificationModule } from './api/product/notification/notification.module';
-import { AuthModule2 } from './api/user/auth2/auth.module';
+import { AuthModule } from './api/user/auth/auth.module';
 
 @Module({
     imports: [
@@ -62,7 +61,7 @@ import { AuthModule2 } from './api/user/auth2/auth.module';
             },
         }),
         JwtModule.register({ global: true }),
-        AuthModule2, //auth2
+        AuthModule,
         AdminModule,
         StudentModule,
         TeacherModule,
@@ -71,7 +70,6 @@ import { AuthModule2 } from './api/user/auth2/auth.module';
         ScheduleModule,
         StatisticaModule,
         CertificateModule,
-        // AuthModule,
         LessonTemplateModule,
         DeleteUserModule,
         TeacherPaymentModule,

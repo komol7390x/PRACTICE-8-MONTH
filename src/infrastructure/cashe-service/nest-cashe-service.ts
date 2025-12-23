@@ -19,8 +19,8 @@ export class CustomCacheService implements OnModuleDestroy {
         this.timeouts.set(key, timeout);
     }
 
-    get<T>(key: string): T | null {
-        return (this.storage.get(key) as T) || null;
+    get<T>(key: string | number): T | null {
+        return (this.storage.get(String(key)) as T) || null;
     }
 
     del(key: string): void {

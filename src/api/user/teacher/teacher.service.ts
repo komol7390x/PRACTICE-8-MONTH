@@ -1,4 +1,4 @@
-import { ConflictException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import { BaseService } from 'src/infrastructure/base/base.service';
@@ -14,15 +14,29 @@ import { type Response } from 'express';
 import { TokenName } from 'src/common/enum/token-name';
 import { successRes } from 'src/infrastructure/response/success.response';
 import { Roles } from 'src/common/enum/roles.enum';
+import { RegisterStep2Dto } from './dto/register-step2';
+import { generateOTP } from 'src/infrastructure/otp-generator/otp-generator';
+import { CustomCacheService } from 'src/infrastructure/cashe-service/nest-cashe-service';
+
+export interface ICheckOTP {
+  id: number,
+  phoneNumber: string,
+  password: string,
+  otp: number,
+  sek: number
+}
+
+
 @Injectable()
 export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherDto, TeacherEntity> {
   constructor(@InjectRepository(TeacherEntity) private readonly teacherRepository: Repository<TeacherEntity>,
     private readonly crypto: CryptoService,
     private readonly tokenService: TokenService,
+    private readonly casheService: CustomCacheService
   ) {
     super(teacherRepository)
   }
-  // ----------------------- REGISTRATION TEACHER -----------------------
+  // ----------------------- CREATE TEACHER -----------------------
 
   async createTeacher(dto: CreateTeacherDto) {
     const { email, phoneNumber, password } = dto
@@ -37,6 +51,47 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
     const hashedPassword = await this.crypto.encrypt(password)
     return super.create({ ...dto, password: hashedPassword });
   }
+
+  // --------------------- REGISTER STEP-2 TEACHER ---------------------
+
+  async registrationStep2(id: number, dto: RegisterStep2Dto) {
+    const { phoneNumber, password } = dto
+    const existTeacher = await this.teacherRepository.findOne({ where: { id } })
+    if (!existTeacher) {
+      throw new NotFoundException(`${id} not found on Teacher`)
+    }
+    const existPhoneNumber = await this.teacherRepository.findOne({ where: { phoneNumber } })
+    if (existPhoneNumber) {
+      throw new ConflictException(`${phoneNumber} already exist on Teacher`)
+    }
+    const hashedPassword = await this.crypto.encrypt(password)
+    const otp = generateOTP()
+    const payload = {
+      phoneNumber,
+      password: hashedPassword,
+      otp,
+      id,
+      sek: 300
+    }
+    this.casheService.set(String(otp), payload, 300)
+    return successRes({ otp, sek: 300, id })
+  }
+  // --------------------- REGISTER STEP-3 TEACHER ---------------------
+
+  async registrationStep3(id: number, otp: number) {
+    const checkOTP: ICheckOTP | null = this.casheService.get(String(otp))
+
+    if (!checkOTP) {
+      throw new NotFoundException(`OTP ${otp} has expired or is invalid`);
+    }
+    if (checkOTP.id != id) {
+      throw new BadRequestException(`${id} is not your id`)
+    }
+
+    await this.teacherRepository.update({ id }, { password: checkOTP.password, phoneNumber: checkOTP.phoneNumber })
+    return successRes({ id, phoneNumber: checkOTP.phoneNumber })
+  }
+
   // ----------------------- SIGN IN -----------------------
 
   async signIn(dto: SigninTeacherDto, res: Response) {
@@ -189,7 +244,7 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
       throw new NotFoundException(`${id} not found on Teacher`)
     }
     const { cardNumber, email, expirence, fullname,
-       password, phoneNumber, portfolioLink } = dto
+      password, phoneNumber, portfolioLink } = dto
 
     const newFullname = fullname ?? teacher.fullname;
     const newPortfolioLink = portfolioLink ?? teacher.portfolioLink;

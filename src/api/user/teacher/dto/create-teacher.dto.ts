@@ -5,6 +5,9 @@ import {
     IsOptional,
     IsInt,
     Min,
+    IsPhoneNumber,
+    IsNotEmpty,
+    IsStrongPassword,
 } from 'class-validator'
 
 export class CreateTeacherDto {
@@ -12,8 +15,10 @@ export class CreateTeacherDto {
     @IsEmail()
     email: string
 
-    @ApiProperty({ example: '+998901234567' })
+    @ApiProperty({ example: '+998901234567', type: 'string' })
+    @IsPhoneNumber('UZ')
     @IsString()
+    @IsNotEmpty()
     phoneNumber: string
 
     @ApiPropertyOptional({ example: 'Ali Valiyev' })
@@ -23,6 +28,8 @@ export class CreateTeacherDto {
 
     @ApiProperty({ example: 'StrongPassword123' })
     @IsString()
+    @IsStrongPassword()
+    @IsNotEmpty()
     password: string
 
     @ApiPropertyOptional({ example: 3 })
