@@ -85,8 +85,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
                 `✅ Refresh token updated for user ${emails?.[0]?.value || googleId}`,
             );
         } else {
-            // Refresh token yo'q bo'lsa, mavjud refresh token'ni saqlaymiz (o'chirmaymiz)
-            // Lekin agar mavjud refresh token ham yo'q bo'lsa, warning beramiz
             if (!findUser?.googleRefreshToken) {
                 console.warn(
                     `⚠️ No refresh token received and user ${emails?.[0]?.value || googleId} doesn't have existing refresh token.`,
