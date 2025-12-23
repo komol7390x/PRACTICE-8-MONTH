@@ -2,46 +2,112 @@ import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { type Response, type Request } from 'express';
+import passport from 'passport';
 import { appConfig } from 'src/config';
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) { }
     @Get('google')
-    // @UseGuards(AuthGuard('google'))
-    googleLogin(@Res() res:Response) {
-        const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-        url.searchParams.set('response_type', 'code');
-        url.searchParams.set('client_id', appConfig.GOOGLE.ID as string);
-        url.searchParams.set('redirect_uri', 'http://localhost:3030/api/v1/auth/google/callback');
-        url.searchParams.set('scope', 'email profile https://www.googleapis.com/auth/calendar.events');
-        url.searchParams.set('access_type', 'offline'); // Refresh token uchun
-        url.searchParams.set('prompt', 'consent');    // Majburiy ruxsat oynasi
+    googleLogin(@Req() req: Request, @Res() res: Response) {
+        // Custom authenticate with prompt=consent to force refresh token
+        passport.authenticate(
+            'google',
+            {
+                scope: [
+                    'email',
+                    'profile',
+                    'https://www.googleapis.com/auth/calendar',
+                    'https://www.googleapis.com/auth/calendar.events',
+                ],
+                accessType: 'offline',
+                prompt: 'consent',
+            } as passport.AuthenticateOptions,
+            (err: any, user: any, info: any) => {
+                if (err) {
+                    return res
+                        .status(500)
+                        .json({ error: 'Authentication failed', details: err });
+                }
+                if (!user) {
+                    return res.status(401).json({ error: 'No user found', info });
+                }
 
-        return res.redirect(url.toString());
+                req.logIn(user, (loginErr: any) => {
+                    if (loginErr) {
+                        return res
+                            .status(500)
+                            .json({ error: 'Login failed', details: loginErr });
+                    }
+                    return res.redirect('/');
+                });
+            },
+        )(req, res);
     }
 
     @Get('google/callback')
     @UseGuards(AuthGuard('google'))
-    async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
-        // Google-dan qaytgan ma'lumotlar req.user ichida bo'ladi
-        const googleUser = req.user;
+    googleCallback(@Req() req, @Res() res) {
 
-        // Foydalanuvchini bazaga saqlash/yangilash
-        const user = await this.authService.validateGoogleUser(googleUser);
+        const { item, step } = req.user;
+        console.log(11111,req.user);
+        // Agar step 2 bo'lsa
+        if (step == 2) {
+            return res.redirect(
+                `${appConfig.FRONT_URL}/auth/teacher/register/step2/${item.id}`,
+            );
+        }
 
-        // O'zimizning JWT tokenlarni yaratamiz
-        const tokens = this.authService.generateTokens(user.id || 1, 'TEACHER');
+        // Agar step 'completed' bo'lsa, tokenlarni yaratamiz va cookies ga saqlaymiz
+        if (step === 'completed') {
+            const jwtTokens = this.authService.generateTokens(item.id, 'TEACHER');
 
-        // Cookiega saqlash
-        res.cookie('access_token', tokens.access_token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 3600000, // 1 soat
-        });
+            res.cookie('access_token', jwtTokens.access_token, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'lax',
+                maxAge: 300000,
+                path: '/',
+            });
 
-        // Frontend-ga redirect
-        return res.redirect('http://localhost:3000/dashboard');
+            res.cookie('refresh_token', jwtTokens.refresh_token, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'lax',
+                maxAge: 300000,
+                path: '/',
+            });
+
+            // Teacher dashboard'ga redirect
+            return res.redirect(`${appConfig.FRONT_URL}/`);
+        }
+
+        // Agar account inactive bo'lsa
+        if (step === 'inactive') {
+            const jwtTokens = this.authService.generateTokens(item.id, 'TEACHER');
+
+            res.cookie('access_token', jwtTokens.access_token, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'lax',
+                maxAge: 300000,
+                path: '/',
+            });
+
+            res.cookie('refresh_token', jwtTokens.refresh_token, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'lax',
+                maxAge: true,
+                path: '/',
+            });
+
+            return res.redirect(
+                `${appConfig.FRONT_URL}/login/teacher?error=account_inactive`,
+            );
+        }
+
+        // Default redirect
+        return res.redirect(`${appConfig.FRONT_URL}/login/teacher?error=unknown_step`);
     }
 }

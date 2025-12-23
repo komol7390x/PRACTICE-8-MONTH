@@ -30,9 +30,4 @@ export class CreateTeacherDto {
     @IsInt()
     @Min(0)
     expirence?: number
-
-    @ApiPropertyOptional({ example: 'https://cdn.site/img.png' })
-    @IsOptional()
-    @IsString()
-    imageUrl?: string
 }

@@ -20,7 +20,7 @@ export class TeacherController {
   constructor(private readonly teacherService: TeacherService) { }
 
   // --------------------- CREATE TEACHER ---------------------
-  @Post('create-teacher')
+  @Post('register-teacher')
 
   @ApiOperation({ summary: 'registration teacher' })
   @AccessRoles('public')

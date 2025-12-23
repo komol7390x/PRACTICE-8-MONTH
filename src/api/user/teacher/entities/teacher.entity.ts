@@ -1,5 +1,4 @@
 import { CertificateEntity } from "src/api/product/certificate/entities/certificate.entity";
-import { GoogleEntity } from "src/api/product/google/entities/google.entity";
 import { Roles } from "src/common/enum/roles.enum";
 import { BaseEntity } from "src/core/base.entity";
 import { Column, Entity, OneToMany } from "typeorm";
@@ -9,14 +8,23 @@ export class TeacherEntity extends BaseEntity {
     @Column({ type: 'varchar', unique: true })
     email: string
 
-    @Column({ type: 'varchar', unique: true })
-    phoneNumber: string
+    @Column({ type: 'varchar', unique: true, nullable: true })
+    phoneNumber?: string
 
     @Column({ type: 'varchar', nullable: true })
     fullname: string
 
-    @Column({ type: 'varchar' })
-    password: string
+    @Column({ type: 'varchar', nullable: true })
+    googleId?: string
+
+    @Column({ type: 'varchar', nullable: true })
+    googleRefreshToken: string | null
+
+    @Column({ type: 'varchar', nullable: true })
+    googleAccessToken: string | null
+
+    @Column({ type: 'varchar',nullable:true })
+    password?: string
 
     @Column({ type: 'varchar', nullable: true })
     portfolioLink: string
@@ -33,11 +41,11 @@ export class TeacherEntity extends BaseEntity {
     @Column({ type: 'int', nullable: true, default: 0 })
     rating: number
 
-    @Column({ type: 'smallint', default: 1 })
-    expirence: number
+    @Column({ type: 'varchar', nullable: true })
+    step: string
 
-    @OneToMany(() => GoogleEntity, (google) => google.teacher)
-    googles: GoogleEntity[];
+    @Column({ type: 'smallint', default: 1, nullable: true })
+    expirence: number
 
     @OneToMany(() => CertificateEntity, (certificate) => certificate.teacher)
     certificates: CertificateEntity[];

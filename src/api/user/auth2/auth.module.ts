@@ -3,11 +3,13 @@ import { JwtModule } from "@nestjs/jwt";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { GoogleStrategy } from "./strategy/google.strategy";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { TeacherEntity } from "../teacher/entities/teacher.entity";
 
 @Module({
     imports: [
         JwtModule.register({ secret: process.env.JWT_SECRET }),
-        // TeacherModule, etc.
+        TypeOrmModule.forFeature([TeacherEntity])
     ],
     controllers: [AuthController],
     providers: [AuthService, GoogleStrategy],

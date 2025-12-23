@@ -93,10 +93,9 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
     const baseQb = this.teacherRepository
       .createQueryBuilder('t')
       .leftJoinAndSelect('t.certificates', 'c')
-      .leftJoinAndSelect('t.googles', 'g')
       .where('t.isDeleted = :isDeleted', { isDeleted: false });
 
-    baseQb.select(['t', 'c', 'g']);
+    baseQb.select(['t', 'c']);
 
     if (status) {
       baseQb.andWhere('t.isActive = :isActive', {
@@ -172,7 +171,7 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
       where: {
         id, isDeleted: false,
       },
-      relations: { certificates: true, googles: true },
+      relations: { certificates: true },
     })
     if (!teacher) {
       throw new NotFoundException(`${id} not found on Teacher`)
@@ -190,7 +189,7 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
       throw new NotFoundException(`${id} not found on Teacher`)
     }
     const { cardNumber, email, expirence, fullname,
-      imageUrl, password, phoneNumber, portfolioLink } = dto
+       password, phoneNumber, portfolioLink } = dto
 
     const newFullname = fullname ?? teacher.fullname;
     const newPortfolioLink = portfolioLink ?? teacher.portfolioLink;
@@ -198,7 +197,6 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
     if (user.role == Roles.ADMIN || user.role == Roles.SUPER_ADMIN) {
 
       const newExpirence = expirence ?? teacher.expirence;
-      const newImageUrl = imageUrl ?? teacher.imageUrl;
 
       if (user.role === Roles.SUPER_ADMIN) {
 
@@ -212,7 +210,6 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
           fullname: newFullname,
           portfolioLink: newPortfolioLink,
           expirence: newExpirence,
-          imageUrl: newImageUrl,
           cardNumber: newCardNumber,
           email: newEmail,
           phoneNumber: newPhoneNumber
@@ -223,7 +220,6 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
         fullname: newFullname,
         portfolioLink: newPortfolioLink,
         expirence: newExpirence,
-        imageUrl: newImageUrl,
       })
 
       return this.findOneTeacher(id)
