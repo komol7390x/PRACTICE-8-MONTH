@@ -14,16 +14,10 @@ export class AuthService {
     }
 
     async generateTokens(id: number, res: Response) {
-        console.log(200001);
-
         const payload = {
             id, role: Roles.TEACHER, isActive: true
         }
-        console.log(1111);
-
         const accessToken = await this.tokenService.accessToken(payload)
-        console.log(222);
-
         res.clearCookie(TokenName.ADMIN_TOKEN)
         res.clearCookie(TokenName.TEACHER_TOKEN)
         res.clearCookie(TokenName.STUDENT_TOKEN)
