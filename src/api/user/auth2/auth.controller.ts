@@ -4,13 +4,14 @@ import { AuthService } from './auth.service';
 import { type Response, type Request } from 'express';
 import passport from 'passport';
 import { appConfig } from 'src/config';
+import { Roles } from 'src/common/enum/roles.enum';
+import { TokenName } from 'src/common/enum/token-name';
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) { }
     @Get('google')
     googleLogin(@Req() req: Request, @Res() res: Response) {
-        // Custom authenticate with prompt=consent to force refresh token
         passport.authenticate(
             'google',
             {
@@ -47,60 +48,60 @@ export class AuthController {
 
     @Get('google/callback')
     @UseGuards(AuthGuard('google'))
-    googleCallback(@Req() req, @Res() res) {
+    async googleCallback(@Req() req, @Res() res) {
 
         const { item, step } = req.user;
-        console.log(11111,req.user);
         // Agar step 2 bo'lsa
         if (step == 2) {
+            await this.authService.generateTokens(item.id, item.role, item.isActive, res)
             return res.redirect(
                 `${appConfig.FRONT_URL}/auth/teacher/register/step2/${item.id}`,
             );
         }
 
-        // Agar step 'completed' bo'lsa, tokenlarni yaratamiz va cookies ga saqlaymiz
+        // // Agar step 'completed' bo'lsa, tokenlarni yaratamiz va cookies ga saqlaymiz
         if (step === 'completed') {
-            const jwtTokens = this.authService.generateTokens(item.id, 'TEACHER');
+            // const jwtTokens = this.authService.generateTokens(item.id, Roles.TEACHER);
 
-            res.cookie('access_token', jwtTokens.access_token, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'lax',
-                maxAge: 300000,
-                path: '/',
-            });
+            // res.cookie(TokenName.TEACHER_TOKEN, jwtTokens.access_token, {
+            //     httpOnly: true,
+            //     secure: true,
+            //     sameSite: 'lax',
+            //     maxAge: 60 * 60 * 1000,
+            //     path: '/',
+            // });
 
-            res.cookie('refresh_token', jwtTokens.refresh_token, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'lax',
-                maxAge: 300000,
-                path: '/',
-            });
+            // res.cookie('refresh_token', jwtTokens.refresh_token, {
+            //     httpOnly: true,
+            //     secure: true,
+            //     sameSite: 'lax',
+            //     maxAge: 60 * 60 * 1000,
+            //     path: '/',
+            // });
 
             // Teacher dashboard'ga redirect
             return res.redirect(`${appConfig.FRONT_URL}/`);
         }
 
-        // Agar account inactive bo'lsa
+        // // Agar account inactive bo'lsa
         if (step === 'inactive') {
-            const jwtTokens = this.authService.generateTokens(item.id, 'TEACHER');
+            // const jwtTokens = this.authService.generateTokens(item.id, 'TEACHER');
 
-            res.cookie('access_token', jwtTokens.access_token, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'lax',
-                maxAge: 300000,
-                path: '/',
-            });
+            // res.cookie('access_token', jwtTokens.access_token, {
+            //     httpOnly: true,
+            //     secure: true,
+            //     sameSite: 'lax',
+            //     maxAge: 300000,
+            //     path: '/',
+            // });
 
-            res.cookie('refresh_token', jwtTokens.refresh_token, {
-                httpOnly: true,
-                secure: true,
-                sameSite: 'lax',
-                maxAge: true,
-                path: '/',
-            });
+            // res.cookie('refresh_token', jwtTokens.refresh_token, {
+            //     httpOnly: true,
+            //     secure: true,
+            //     sameSite: 'lax',
+            //     maxAge: true,
+            //     path: '/',
+            // });
 
             return res.redirect(
                 `${appConfig.FRONT_URL}/login/teacher?error=account_inactive`,

@@ -5,6 +5,7 @@ import { AuthService } from "./auth.service";
 import { GoogleStrategy } from "./strategy/google.strategy";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { TeacherEntity } from "../teacher/entities/teacher.entity";
+import { TokenService } from "src/infrastructure/token/Token";
 
 @Module({
     imports: [
@@ -12,6 +13,6 @@ import { TeacherEntity } from "../teacher/entities/teacher.entity";
         TypeOrmModule.forFeature([TeacherEntity])
     ],
     controllers: [AuthController],
-    providers: [AuthService, GoogleStrategy],
+    providers: [AuthService, GoogleStrategy, TokenService],
 })
 export class AuthModule2 { }

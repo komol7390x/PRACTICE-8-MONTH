@@ -48,6 +48,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
                 '\n- For production: Complete app verification in Google Console',
             );
         }
+
         const { displayName: name, emails, id: googleId, photos } = profile;
         const findUser = await this.teacherRepo.findOne({ where: { googleId } })
 
@@ -68,6 +69,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
                     name: newUser?.fullname,
                     googleId: newUser.googleId,
                     email: newUser.email,
+                    isActive: newUser.isActive
                 },
                 step: newUser.step,
                 message: 'Step 1 completed. Please provide phone number and password.',
@@ -78,7 +80,6 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         const updateData: any = {
             googleAccessToken: accessToken,
         };
-
         if (refreshToken) {
             updateData.googleRefreshToken = refreshToken;
             console.log(
@@ -102,12 +103,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         })
 
         if (!findUser.phoneNumber || !findUser.password) {
-            // Step 2 ga yo'naltirish
             done(null, {
                 item: {
                     id: findUser.id,
                     name: findUser.fullname,
                     email: findUser.email,
+                    isActive: findUser.isActive
                 },
                 step: 2,
                 message: 'Registration incomplete. Please complete step 2.',
@@ -121,6 +122,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
                     id: findUser.id,
                     name: findUser.fullname,
                     email: findUser.email,
+                    isActive: findUser.isActive
                 },
                 step: 'inactive',
                 message:
@@ -133,6 +135,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
                 id: findUser.id,
                 name: findUser.fullname,
                 email: findUser.email,
+                isActive: findUser.isActive
             },
             step: 'completed',
             message: 'Teacher logged in successfully',

@@ -1,23 +1,32 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { type Response } from 'express';
+import { TokenName } from 'src/common/enum/token-name';
+import { appConfig } from 'src/config';
+import { TokenService } from 'src/infrastructure/token/Token';
 
 @Injectable()
 export class AuthService {
-    constructor(private jwtService: JwtService) { }
+    constructor(private readonly tokenService: TokenService,) { }
 
     async validateGoogleUser(googleUser: any) {
-        // 1. Bazadan googleUser.email orqali foydalanuvchini qidirasiz
-        // 2. Agar yo'q bo'lsa, yangi foydalanuvchi yaratasiz (googleId, email, va h.k.)
-        // 3. Google refreshToken-ni bazada saqlab qo'yishingiz shart (keyinchalik Calendar uchun kerak bo'ladi)
-
-        return googleUser; // Hozircha qaytarib turamiz
+        return googleUser;
     }
 
-    generateTokens(userId: number, role: string) {
-        const payload = { sub: userId, role };
-        return {
-            access_token: this.jwtService.sign(payload, { expiresIn: '1h' }),
-            refresh_token: this.jwtService.sign(payload, { expiresIn: '7d' }),
-        };
+    async generateTokens(id: number, role: string, isActive: boolean, res: Response) {
+        const payload = {
+            id, role, isActive
+        }
+        const accessToken = await this.tokenService.accessToken(payload)
+
+        res.clearCookie(TokenName.ADMIN_TOKEN)
+        res.clearCookie(TokenName.TEACHER_TOKEN)
+        res.clearCookie(TokenName.STUDENT_TOKEN)
+
+        await this.tokenService.writeCookie(
+            res,
+            TokenName.TEACHER_TOKEN,
+            accessToken,
+            appConfig.TOKEN.ACCESS_TOKEN_TIME)
     }
 }
