@@ -17,20 +17,22 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
   // --------------------CREATE STUDNENT --------------------
 
   async createStudent(dto: CreateStudentDto) {
-    const { phoneNumber, tgUsername, tgId, firstName, lastName } = dto
-    const existStudentTgId = await this.studentRepository.findOne({ where: { tgId } })
-    if (existStudentTgId) {
-      throw new ConflictException(`Telegram Id ${tgId} already exist on student`)
-    }
-    const existStudentTel = await this.studentRepository.findOne({ where: { phoneNumber } })
-    if (existStudentTel) {
-      throw new ConflictException(`Tel ${phoneNumber} already exist on student`)
-    }
-    const existStudentUsername = await this.studentRepository.findOne({ where: { tgUsername } })
-    if (existStudentUsername) {
-      throw new ConflictException(`Tgusername ${existStudentUsername} already exist on student`)
-    }
-    return super.create({ phoneNumber, tgUsername, tgId, firstName, lastName })
+    console.log(1111, dto);
+
+    // const { phoneNumber, tgUsername, tgId, firstName, lastName } = dto
+    // const existStudentTgId = await this.studentRepository.findOne({ where: { tgId } })
+    // if (existStudentTgId) {
+    //   throw new ConflictException(`Telegram Id ${tgId} already exist on student`)
+    // }
+    // const existStudentTel = await this.studentRepository.findOne({ where: { phoneNumber } })
+    // if (existStudentTel) {
+    //   throw new ConflictException(`Tel ${phoneNumber} already exist on student`)
+    // }
+    // const existStudentUsername = await this.studentRepository.findOne({ where: { tgUsername } })
+    // if (existStudentUsername) {
+    //   throw new ConflictException(`Tgusername ${existStudentUsername} already exist on student`)
+    // }
+    // return super.create({ phoneNumber, tgUsername, tgId, firstName, lastName })
 
   }
   // ----------------------- FIND ALL STUDENTS PAGANATION -----------------------
