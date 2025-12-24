@@ -36,6 +36,7 @@ interface IConfig {
   }
   GET_URL: string,
   UPLOAD_FOLDER: string;
+  TELEGRAM_BOT_TOKEN: string;
 }
 
 export const appConfig: IConfig = {
@@ -73,4 +74,5 @@ export const appConfig: IConfig = {
   },
   GET_URL: String(process.env.GET_URL),
   UPLOAD_FOLDER: String(process.env.UPLOAD_FOLDER),
+  TELEGRAM_BOT_TOKEN: String(process.env.TELEGRAM_BOT_TOKEN)
 };

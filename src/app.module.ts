@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { appConfig } from 'src/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -20,11 +20,15 @@ import { TransactionModule } from './api/product/transaction/transaction.module'
 import { LessonHistoryModule } from './api/product/lesson-history/lesson-history.module';
 import { NotificationModule } from './api/product/notification/notification.module';
 import { AuthModule } from './api/user/auth/auth.module';
+import { BotModule } from './api/product/bot/bot.module';
+import { TelegrafModule } from 'nestjs-telegraf';
+import { session } from 'telegraf';
 
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
+            envFilePath: '.env', // Agar ildiz papkada bo'lsa shunday qoladi
         }),
 
         ServeStaticModule.forRoot({
@@ -61,6 +65,12 @@ import { AuthModule } from './api/user/auth/auth.module';
             },
         }),
         JwtModule.register({ global: true }),
+        TelegrafModule.forRoot({
+            token: appConfig.TELEGRAM_BOT_TOKEN,
+            launchOptions: {},
+            middlewares: [session()]
+        }),
+        BotModule,
         AuthModule,
         AdminModule,
         StudentModule,
