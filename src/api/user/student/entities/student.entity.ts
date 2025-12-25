@@ -16,6 +16,9 @@ export class StudentEntity extends BaseEntity {
     @Column({ type: 'varchar' })
     firstName: string
 
+    @Column({ type: 'decimal', nullable: true, default: 0 })
+    wallet: number
+
     @Column({ type: 'enum', enum: Roles, default: Roles.STUDENT })
     role: Roles
 

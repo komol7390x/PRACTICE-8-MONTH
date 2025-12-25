@@ -23,6 +23,7 @@ import { AuthModule } from './api/user/auth/auth.module';
 import { BotModule } from './api/product/bot/bot.module';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { session } from 'telegraf';
+import { CourseModule } from './api/user/course/course.module';
 
 @Module({
     imports: [
@@ -70,22 +71,23 @@ import { session } from 'telegraf';
             launchOptions: {},
             middlewares: [session()]
         }),
-        BotModule,
+        LessonModule,
+        ScheduleModule,
+        StatisticaModule,
+        LessonHistoryModule,
         AuthModule,
         AdminModule,
         StudentModule,
         TeacherModule,
-        LessonModule,
         PaymentModule,
-        ScheduleModule,
-        StatisticaModule,
         CertificateModule,
         LessonTemplateModule,
         DeleteUserModule,
         TeacherPaymentModule,
         TransactionModule,
-        LessonHistoryModule,
         NotificationModule,
+        BotModule,
+        CourseModule,
     ],
     controllers: [],
     providers: [],
