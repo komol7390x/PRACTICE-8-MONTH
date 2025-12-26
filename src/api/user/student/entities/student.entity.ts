@@ -1,6 +1,7 @@
+import { LessonTemplateEntity } from "src/api/product/lesson-template/entities/lesson-template.entity";
 import { Roles } from "src/common/enum/roles.enum";
 import { BaseEntity } from "src/core/base.entity";
-import { Column, Entity } from "typeorm";
+import { Column, Entity, OneToMany } from "typeorm";
 
 @Entity('student')
 export class StudentEntity extends BaseEntity {
@@ -30,4 +31,7 @@ export class StudentEntity extends BaseEntity {
 
     @Column({ type: 'varchar', nullable: true })
     blockedReason: string
+
+    @OneToMany(() => LessonTemplateEntity, (lesson) => lesson.student)
+    lessons: LessonTemplateEntity[];
 }

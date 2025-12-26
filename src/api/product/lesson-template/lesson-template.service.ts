@@ -10,32 +10,26 @@ import { TeacherEntity } from 'src/api/user/teacher/entities/teacher.entity';
 import { StudentEntity } from 'src/api/user/student/entities/student.entity';
 
 @Injectable()
-export class LessonTemplateService extends BaseService<CreateLessonTemplateDto,
-  UpdateLessonTemplateDto, LessonTemplateEntity> {
-  constructor(@InjectRepository(LessonTemplateEntity)
-  private readonly lessonTempRepo: Repository<LessonTemplateEntity>,
+export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, UpdateLessonTemplateDto, LessonTemplateEntity> {
+  constructor(
+    @InjectRepository(LessonTemplateEntity)
+    private readonly lessonTempRepo: Repository<LessonTemplateEntity>, // Nomi lessonTempRepo
     @InjectRepository(TeacherEntity)
     private readonly teacherRepo: Repository<TeacherEntity>,
     @InjectRepository(StudentEntity)
     private readonly studentRepo: Repository<StudentEntity>,
   ) { super(lessonTempRepo) }
 
-  // ----------------------- CREATE LESSON TEMPLATE -----------------------
   async createLessonByTeacher(teacherId: number, dto: CreateLessonTemplateDto) {
     const teacher = await this.teacherRepo.findOne({ where: { id: teacherId } });
-    if (!teacher) {
-      throw new NotFoundException(`${teacherId} is not found on Teacher`)
+    if (!teacher || !teacher.googleRefreshToken) {
+      throw new NotFoundException(`Teacher or Google Token not found`);
     }
 
-    if (!teacher.googleRefreshToken) {
-      throw new NotFoundException(`${teacherId} is not found refresh token`)
-    }
-    // 1. Google Auth sozlash
     const oauth2Client = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
-    oauth2Client.setCredentials({ refresh_token: teacher.googleRefreshToken })
+    oauth2Client.setCredentials({ refresh_token: teacher.googleRefreshToken });
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
-    // 2. Google Calendar'da dars yaratish
     const event = await calendar.events.insert({
       calendarId: 'primary',
       conferenceDataVersion: 1,
@@ -52,46 +46,54 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto,
       },
     });
 
-    // 3. Bazaga saqlash (Keyinchalik talaba yozilishi uchun)
-    const newLesson = await this.lessonTempRepo.save({
+    const newLesson = this.lessonTempRepo.create({
+      name: dto.name,
       teacherId: teacher.id,
-      googleEventId: event.data.id,
-      meetLink: event.data.hangoutLink,
-      startTime: dto.startTime,
-      endTime: dto.finishTime,
+      googleEventId: event.data.id ?? undefined,
+      meetLink: event.data.hangoutLink ?? undefined,
+      startTime: new Date(dto.startTime),
+      endTime: new Date(dto.finishTime),
       status: 'available',
-    });
+    } as Partial<LessonTemplateEntity>);
 
-    return newLesson;
+    return await this.lessonTempRepo.save(newLesson);
   }
 
   async bookLessonByStudent(studentId: number, lessonId: number) {
-    const lesson = await this.lessonTempRepo.findOne({ where: { id: lessonId }, relations: ['teacher'] });
-    const student = await this.studentRepo.findOne({ where: { id: studentId } });
+    const lesson = await this.lessonTempRepo.findOne({
+      where: { id: lessonId },
+      relations: { teacher: true }
+    });
 
-    // 1. O'qituvchining tokeni bilan Calendar'ga ulanish
+    // lesson null bo'lishi mumkinligini tekshirish (Error 95 va 89-90 uchun)
+    if (!lesson) throw new NotFoundException("Lesson not found");
+
+    const student = await this.studentRepo.findOne({ where: { id: studentId } });
+    if (!student) throw new NotFoundException("Student not found");
+
     const oauth2Client = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
-    // oauth2Client.setCredentials({ refresh_token: lesson });
+    oauth2Client.setCredentials({ refresh_token: lesson.teacher.googleRefreshToken });
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
-    // 2. Mavjud event'ni yangilash (Talabani qo'shish)
     await calendar.events.patch({
       calendarId: 'primary',
-      eventId: lesson.googleEventId,
-      sendUpdates: 'all', // Talabaga email boradi
+      eventId: lesson.googleEventId, // Teacher ID emas, Google Event ID bo'lishi kerak
+      sendUpdates: 'all',
       requestBody: {
-        attendees: [{ email: student.email }], // Talaba emailini qo'shish
+        attendees: [{ email: student.phoneNumber }], // Agar studentda email bo'lsa email qo'ying
       },
     });
 
-    // 3. Bazada darsni band qilingan deb belgilash
+    // Endi xato bermaydi, chunki lesson null emasligini tekshirdik
     lesson.studentId = student.id;
     lesson.status = 'booked';
-    await this.lessonRepo.save(lesson);
+
+    // this.lessonRepo emas, this.lessonTempRepo!
+    await this.lessonTempRepo.save(lesson);
 
     return {
       message: "Dars muvaffaqiyatli band qilindi",
-      meetLink: lesson.meetLink // Talabaga linkni ko'rsatish
+      meetLink: lesson.meetLink
     };
   }
 }

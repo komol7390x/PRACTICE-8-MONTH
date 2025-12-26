@@ -7,7 +7,7 @@ export class AdminEntity extends BaseEntity {
     @Column({ type: 'varchar', unique: true })
     username: string;
 
-    @Column({ type: 'varchar', })
+    @Column({ type: 'varchar', nullable: true })
     fullname: string;
 
     @Column({ type: 'varchar' })

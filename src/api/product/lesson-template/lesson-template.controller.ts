@@ -13,16 +13,15 @@ import { ApiOperation, ApiParam } from '@nestjs/swagger';
 export class LessonTemplateController {
   constructor(private readonly lessonTemplateService: LessonTemplateService) { }
   // ------------------------CREATE LESSON TABLE ------------------------
-  @Post()
-
+  @Post('create-lesson')
   @ApiOperation({ summary: 'registration student' })
-  @AccessRoles(Roles.SUPER_ADMIN, Roles.TEACHER, 'ID')
+  @AccessRoles(Roles.TEACHER, 'ID')
 
   @ApiParam({ type: Number, name: 'teacherId', example: '25' })
   create(
     @Param('teacherId', ParseIntPipe) teacherId: number,
     @Body() dto: CreateLessonTemplateDto) {
-    // return this.lessonTemplateService.createLessonTemplate(teacherId, dto);
+    return this.lessonTemplateService.createLessonByTeacher(teacherId, dto);
   }
   // ------------------------CREATE LESSON TABLE ------------------------
 

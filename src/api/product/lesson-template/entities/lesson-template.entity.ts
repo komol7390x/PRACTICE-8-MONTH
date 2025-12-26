@@ -1,21 +1,40 @@
 import { BaseEntity } from "src/core/base.entity";
-import { Column, Entity } from "typeorm";
+import { Column, Entity, ManyToOne, JoinColumn } from "typeorm";
 import { WeekDays } from "../enum/week-day";
+import { TeacherEntity } from "src/api/user/teacher/entities/teacher.entity";
+import { StudentEntity } from "src/api/user/student/entities/student.entity";
 
 @Entity('lessonTemplate')
 export class LessonTemplateEntity extends BaseEntity {
-    @Column({ type: 'int' })
-    teacherId: number
+    @Column({ name: 'teacherId', type: 'int' }) // bazadagi nomi
+    teacherId: number; // klass ichidagi nomi
+
+    @Column({ name: 'studentId', type: 'int', nullable: true })
+    studentId: number;
+
+    @Column({ type: 'varchar', nullable: true })
+    googleEventId: string;
+
+    @Column({ type: 'varchar', nullable: true })
+    meetLink: string;
+
+    @Column({ type: 'varchar', default: 'available' })
+    status: string;
 
     @Column({ type: 'varchar' })
-    name: string
+    name: string;
 
-    @Column({ type: 'int', nullable: true })
-    startTime: number
+    @Column({ type: 'timestamptz' })
+    startTime: Date;
 
-    @Column({ type: 'int', nullable: true })
-    finishTime: number
+    @Column({ type: 'timestamptz' })
+    endTime: Date;
 
-    @Column({ type: 'enum', enum: WeekDays, nullable: true })
-    weekDay: WeekDays
+    @ManyToOne(() => TeacherEntity, (teacher) => teacher.lessons)
+    @JoinColumn({ name: 'teacherId' }) // teacher_id column bilan bog'lanadi
+    teacher: TeacherEntity;
+
+    @ManyToOne(() => StudentEntity)
+    @JoinColumn({ name: 'studentId' })
+    student: StudentEntity;
 }
