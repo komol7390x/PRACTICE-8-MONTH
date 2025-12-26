@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, HttpException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import { BaseService } from 'src/infrastructure/base/base.service';
@@ -98,7 +98,6 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
 
     const { email, password } = dto;
     const teacher = await this.teacherRepository.findOne({ where: { email } });
-    console.log(teacher);
 
     const checkPassword = await this.crypto.decrypt(
       password, teacher?.password || ''
@@ -226,7 +225,7 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
       where: {
         id, isDeleted: false,
       },
-      relations: { certificates: true },
+      relations: { certificates: true, lessons: true },
     })
     if (!teacher) {
       throw new NotFoundException(`${id} not found on Teacher`)
@@ -239,59 +238,42 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
   // ----------------------- UPDATE TEACHER -----------------------
 
   async updateTeacher(id: number, dto: UpdateTeacherDto, user: IToken) {
-    const teacher = await this.teacherRepository.findOne({ where: { id } })
+    console.log(111);
+
+    const teacher = await this.teacherRepository.findOne({ where: { id } });
     if (!teacher) {
-      throw new NotFoundException(`${id} not found on Teacher`)
+      throw new NotFoundException(`${id} not found on Teacher`);
     }
-    const { cardNumber, email, expirence, fullname,
-      password, phoneNumber, portfolioLink } = dto
 
-    const newFullname = fullname ?? teacher.fullname;
-    const newPortfolioLink = portfolioLink ?? teacher.portfolioLink;
+    // 2. Yangilanadigan ma'lumotlarni tayyorlash (Object destructuring)
+    const updateData: Partial<TeacherEntity> = {
+      fullname: dto.fullname ?? teacher.fullname,
+      portfolioLink: dto.portfolioLink ?? teacher.portfolioLink,
+    };
 
-    if (user.role == Roles.ADMIN || user.role == Roles.SUPER_ADMIN) {
-
-      const newExpirence = expirence ?? teacher.expirence;
+    // 3. Rollarga qarab ruxsatlarni tekshirish
+    if (user.role === Roles.ADMIN || user.role === Roles.SUPER_ADMIN) {
+      updateData.expirence = dto.expirence ?? teacher.expirence;
 
       if (user.role === Roles.SUPER_ADMIN) {
+        updateData.cardNumber = dto.cardNumber ?? teacher.cardNumber;
+        updateData.email = dto.email ?? teacher.email;
+        updateData.phoneNumber = dto.phoneNumber ?? teacher.phoneNumber;
 
-        const newCardNumber = cardNumber ?? teacher.cardNumber;
-        const newEmail = email ?? teacher.email;
-        let hashedPassword = teacher.password
-        if (password) hashedPassword = await this.crypto.encrypt(password)
-        const newPhoneNumber = phoneNumber ?? teacher.phoneNumber
-
-        await this.teacherRepository.update({ id }, {
-          fullname: newFullname,
-          portfolioLink: newPortfolioLink,
-          expirence: newExpirence,
-          cardNumber: newCardNumber,
-          email: newEmail,
-          phoneNumber: newPhoneNumber
-        })
-        return this.findOneTeacher(id)
+        if (dto.password) {
+          updateData.password = await this.crypto.encrypt(dto.password);
+        }
       }
-      await this.teacherRepository.update({ id }, {
-        fullname: newFullname,
-        portfolioLink: newPortfolioLink,
-        expirence: newExpirence,
-      })
-
-      return this.findOneTeacher(id)
     }
-    await this.teacherRepository.update({ id }, {
-      fullname: newFullname,
-      portfolioLink: newPortfolioLink
-    })
-    return this.findOneTeacher(id)
+    await this.teacherRepository.update(id, updateData);
+    return await this.findOneTeacher(id);
   }
 
   // ----------------------- SIGN IN -----------------------
-  async blockedStudent(id: number, blocked: boolean) {
+  async blockedTeacher(id: number, blocked: boolean) {
     await this.findOneById(id)
-    const blockedAt = new Date
     await this.teacherRepository.update({ id }, { isActive: blocked })
     return super.findOneById(id)
-
   }
+
 }

@@ -33,6 +33,9 @@ export class TeacherEntity extends BaseEntity {
     @Column({ type: 'varchar', nullable: true })
     cardNumber: string
 
+    @Column({ type: 'decimal', nullable: true, default: 0 })
+    wallet: number
+
     @Column({ type: 'enum', enum: Roles, default: Roles.TEACHER })
     role: Roles
 

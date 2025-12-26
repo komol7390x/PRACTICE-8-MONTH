@@ -1,13 +1,14 @@
-import { Controller, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Param, ParseIntPipe, Get } from '@nestjs/common';
 import { LessonTemplateService } from './lesson-template.service';
 import { CreateLessonTemplateDto } from './dto/create-lesson-template.dto';
 import { RolesGuard } from 'src/common/guard/RolesGuard';
 import { AuthGuard } from 'src/common/guard/AuthGuard';
 import { AccessRoles } from 'src/common/decorator/roles.decorator';
 import { Roles } from 'src/common/enum/roles.enum';
-import { ApiOperation } from '@nestjs/swagger';
+import { ApiOperation, ApiParam } from '@nestjs/swagger';
 import { CurrentUser } from 'src/common/decorator/currentUser.decorator';
 import { type IToken } from 'src/infrastructure/token/interface';
+import { BookLessonByStudentDto } from './dto/book-lesson-by-student.dto';
 
 @Controller('lesson-template')
 @UseGuards(AuthGuard, RolesGuard)
@@ -22,30 +23,25 @@ export class LessonTemplateController {
   create(
     @CurrentUser('user') user: IToken,
     @Body() dto: CreateLessonTemplateDto) {
-    return this.lessonTemplateService.createLessonByTeacher(user.id, dto);
+    return this.lessonTemplateService.createLessonByTeacher(user?.id, dto);
   }
-  // ------------------------CREATE LESSON TABLE ------------------------
+  // --------------------- BOOKED LESSON BY STUDENT ---------------------
+  @Post('booked-by-student/:id')
 
-  // @Get()
-  // findAll() {
-  //   return this.lessonTemplateService.findAllLessonTemplate();
-  // }
-  // // ------------------------CREATE LESSON TABLE ------------------------
+  @ApiOperation({ summary: 'book lesson by student' })
+  // @AccessRoles(Roles.STUDENT)
+  async bookLessonByStudent(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: BookLessonByStudentDto
+  ) {
+    return this.lessonTemplateService.bookLessonByStudent(id, dto)
+  }
+  // --------------------- GET ALL BOOK LESSON ---------------------
 
-  // @Get(':id')
-  // findOne(@Param('id') id: string) {
-  //   return this.lessonTemplateService.findOneLessonTemplate(+id);
-  // }
-  // // ------------------------CREATE LESSON TABLE ------------------------
+  @Get()
+  @ApiOperation({ summary: 'get all book lesson for admin' })
 
-  // @Patch(':id')
-  // update(@Param('id') id: string, @Body() dto: UpdateLessonTemplateDto) {
-  //   return this.lessonTemplateService.updateLessonTemplate(+id, dto);
-  // }
-  // // ------------------------CREATE LESSON TABLE ------------------------
-
-  // @Delete(':id')
-  // remove(@Param('id') id: string) {
-  //   return this.lessonTemplateService.removeLessonTemplate(+id);
-  // }
+  getAllBookLesson() {
+    return this.lessonTemplateService.getAllBookLesson()
+  }
 }

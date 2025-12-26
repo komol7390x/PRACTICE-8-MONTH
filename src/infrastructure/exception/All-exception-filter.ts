@@ -13,77 +13,73 @@ import * as geoip from 'geoip-lite';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private readonly logger = new Logger(AllExceptionsFilter.name);
+  private readonly logger = new Logger('HTTP_ERROR');
 
   constructor(private readonly httpAdapterHost: HttpAdapterHost) { }
 
-  catch(exception: unknown, host: ArgumentsHost): void {
+  catch(exception: any, host: ArgumentsHost): void {
     const { httpAdapter } = this.httpAdapterHost;
-
-    if (host.getType() !== 'http') {
-      this.logger.error('Bot Error:', exception);
-      return;
-    }
-
     const ctx = host.switchToHttp();
     const request = ctx.getRequest<Request>();
 
-    let httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message: string | string[] = 'Internal server error';
-
-    // ----------------------------------------------------
-    // XATOLIK TURINI ANIQLASH
-    // ----------------------------------------------------
-    if (exception instanceof HttpException) {
-      httpStatus = exception.getStatus();
-      const responseBody = exception.getResponse();
-      message = (responseBody as any).message || responseBody;
-    } else if (exception instanceof QueryFailedError) {
-      httpStatus = (exception as any).code === '23505' ? HttpStatus.CONFLICT : HttpStatus.BAD_REQUEST;
-      message = (exception as any).code === '23505' ? 'Duplicate entry' : 'Database error';
+    if (host.getType() !== 'http') {
+      this.logger.error('Non-HTTP Error caught:', exception);
+      return;
     }
 
-    // ----------------------------------------------------
-    // IP VA GEO-LOCATION (XAVFSIZ USUL)
-    // ----------------------------------------------------
-    // Siz so'ragan xavfsiz IP olish usuli:
+    // 1. DEFAULT QIYMATLAR
+    let status = HttpStatus.INTERNAL_SERVER_ERROR;
+    let message: string | string[] = 'Internal server error';
+
+    // 2. XATOLIK TURINI ANIQLASH (MAPPING)
+    if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      const res = exception.getResponse();
+      message = (res as any).message || res;
+    }
+    else if (exception instanceof QueryFailedError) {
+      status = (exception as any).code === '23505' ? HttpStatus.CONFLICT : HttpStatus.BAD_REQUEST;
+      message = (exception as any).code === '23505' ? 'Duplicate entry' : 'Database error';
+    }
+    // AGAR xatolik obyekt bo'lsa va ichida statusCode/status bo'lsa (Sizdagi holat)
+    else if (exception?.statusCode || exception?.status) {
+      status = exception.statusCode || exception.status;
+      message = exception.message || 'Error occurred';
+    }
+
+    // 3. IP VA GEO-LOCATION
     const clientIp =
       (request?.headers?.['x-forwarded-for'] as string)?.split(',')[0] ||
       request?.ip ||
       request?.socket?.remoteAddress ||
-      'Unknown IP';
+      '127.0.0.1';
 
     const geo = geoip.lookup(clientIp);
     const country = geo ? geo.country : 'Local';
-    const userAgent = request?.headers?.['user-agent'] || 'Unknown Device';
 
-    // ----------------------------------------------------
-    // LOGGING
-    // ----------------------------------------------------
-    const logData = {
-      statusCode: httpStatus,
-      path: request?.url,
-      method: request?.method,
-      ip: clientIp,
-      country,
-    };
+    // 4. STACK TRACE VA LOGGING
+    const stack = exception instanceof Error
+      ? exception.stack
+      : `Non-standard error: ${JSON.stringify(exception)}`;
 
-    if (httpStatus >= 500) {
-      this.logger.error(`SERVER_ERROR | ${JSON.stringify(logData)}`, (exception as Error).stack);
+    const logSummary = `${request.method} ${request.url} | Status: ${status} | Country: ${country}`;
+
+    if (status >= 500) {
+      this.logger.error(`${logSummary} | Error: ${JSON.stringify(message)}`, stack);
     } else {
-      this.logger.warn(`CLIENT_ERROR | ${JSON.stringify(logData)}`);
+      this.logger.warn(`${logSummary} | Warning: ${JSON.stringify(message)}`);
     }
 
-    // ----------------------------------------------------
-    // CLIENT'GA JAVOB QAYTARISH
-    // ----------------------------------------------------
+    // 5. CLIENTGA JAVOB QAYTARISH
     const responseBody = {
-      statusCode: httpStatus,
-      message,
+      success: false,
+      statusCode: status,
+      // Validation xatolari bo'lsa (Array), birinchisini yoki hammasini chiroyli chiqarish
+      message: Array.isArray(message) ? message.join(', ') : message,
       timestamp: new Date().toISOString(),
-      path: request?.url,
+      path: request.url,
     };
 
-    httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
+    httpAdapter.reply(ctx.getResponse(), responseBody, status);
   }
 }

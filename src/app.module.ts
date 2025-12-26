@@ -10,7 +10,6 @@ import { LessonModule } from './api/product/lesson/lesson.module';
 import { TeacherModule } from './api/user/teacher/teacher.module';
 import { StudentModule } from './api/user/student/student.module';
 import { PaymentModule } from './api/product/payment/payment.module';
-import { ScheduleModule } from './api/product/schedule/schedule.module';
 import { StatisticaModule } from './api/product/statistica/statistica.module';
 import { CertificateModule } from './api/product/certificate/certificate.module';
 import { LessonTemplateModule } from './api/product/lesson-template/lesson-template.module';
@@ -24,14 +23,14 @@ import { BotModule } from './api/product/bot/bot.module';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { session } from 'telegraf';
 import { CourseModule } from './api/user/course/course.module';
-
+import { ScheduleModule } from '@nestjs/schedule';
 @Module({
     imports: [
         ConfigModule.forRoot({
             isGlobal: true,
             envFilePath: '.env', // Agar ildiz papkada bo'lsa shunday qoladi
         }),
-
+        ScheduleModule.forRoot(),
         ServeStaticModule.forRoot({
             rootPath: join(process.cwd(), 'uploads'),
             serveRoot: '/uploads',
@@ -66,11 +65,11 @@ import { CourseModule } from './api/user/course/course.module';
             },
         }),
         JwtModule.register({ global: true }),
-        TelegrafModule.forRoot({
-            token: appConfig.TELEGRAM_BOT_TOKEN,
-            launchOptions: {},
-            middlewares: [session()]
-        }),
+        // TelegrafModule.forRoot({
+        //     token: appConfig.TELEGRAM_BOT_TOKEN,
+        //     launchOptions: {},
+        //     middlewares: [session()]
+        // }),
         LessonTemplateModule,
         AuthModule,
         AdminModule,
@@ -82,7 +81,7 @@ import { CourseModule } from './api/user/course/course.module';
         TeacherPaymentModule,
         TransactionModule,
         NotificationModule,
-        BotModule,
+        // BotModule,
         CourseModule,
         LessonHistoryModule,
         StatisticaModule,

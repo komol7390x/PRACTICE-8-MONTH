@@ -64,7 +64,7 @@ export class TeacherController {
     return this.teacherService.signIn(dto, res);
   }
 
-  // --------------------- SIGN IN TEACHER ---------------------
+  // --------------------- SIGN OUT TEACHER ---------------------
   @Post('singOut')
   @AccessRoles(Roles.TEACHER)
 
@@ -140,7 +140,7 @@ export class TeacherController {
     @Param('id', ParseIntPipe) id: number,
     @Query('active') active: boolean,
   ) {
-    return this.teacherService.blockedStudent(id, active);
+    return this.teacherService.blockedTeacher(id, active);
   }
 
   // --------------------- UPDATE ---------------------
@@ -150,7 +150,9 @@ export class TeacherController {
   @ApiOperation({ summary: 'get one teacher' })
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, 'ID')
 
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateTeacherDto, @CurrentUser() user: IToken) {
+  update(@Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateTeacherDto,
+    @CurrentUser() user: IToken) {
     return this.teacherService.updateTeacher(+id, dto, user);
   }
   // --------------------- SOFT DELETE ---------------------

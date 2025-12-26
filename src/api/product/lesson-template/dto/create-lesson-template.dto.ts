@@ -21,5 +21,10 @@ export class CreateLessonTemplateDto {
     @ApiProperty({ type: 'string', example: 'Fizika' })
     @IsString()
     @IsNotEmpty()
-    name: string
+    lessonName: string
+
+    @ApiProperty({ type: 'number', example: 50000 })
+    @IsNumber()
+    @IsNotEmpty()
+    lessonPrice: number
 }

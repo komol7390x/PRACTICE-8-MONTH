@@ -6,7 +6,7 @@ import { StudentSort } from "../enum/student-sort";
 export function ApiPagination() {
     return applyDecorators(
         ApiQuery({ name: 'search', required: false, type: String }),
-        ApiQuery({ name: 'status', required: false, enum: StudentStatus }),
+        ApiQuery({ name: 'status', required: false, type: Boolean }),
         ApiQuery({ name: 'page', required: false, type: Number }),
         ApiQuery({ name: 'limit', required: false, type: Number }),
         ApiQuery({ name: 'sort', required: false, enum: StudentSort })

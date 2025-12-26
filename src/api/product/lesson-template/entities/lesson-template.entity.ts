@@ -3,11 +3,12 @@ import { Column, Entity, ManyToOne, JoinColumn } from "typeorm";
 import { WeekDays } from "../enum/week-day";
 import { TeacherEntity } from "src/api/user/teacher/entities/teacher.entity";
 import { StudentEntity } from "src/api/user/student/entities/student.entity";
+import { BookedLesson } from "../enum/booked-type";
 
 @Entity('lessonTemplate')
 export class LessonTemplateEntity extends BaseEntity {
     @Column({ name: 'teacherId', type: 'int' }) // bazadagi nomi
-    teacherId: number; // klass ichidagi nomi
+    teacherId: number;
 
     @Column({ name: 'studentId', type: 'int', nullable: true })
     studentId: number;
@@ -18,20 +19,26 @@ export class LessonTemplateEntity extends BaseEntity {
     @Column({ type: 'varchar', nullable: true })
     meetLink: string;
 
-    @Column({ type: 'varchar', default: 'available' })
+    @Column({ type: 'varchar', default: BookedLesson.AVAILABLE, nullable: true })
     status: string;
 
+    @Column({ default: false, nullable: true })
+    isPaidToTeacher: boolean;
+
     @Column({ type: 'varchar' })
-    name: string;
+    lessonName: string;
 
     @Column({ type: 'timestamptz' })
     startTime: Date;
+
+    @Column({ type: 'decimal', nullable: true, default: 10000 })
+    price: number;
 
     @Column({ type: 'timestamptz' })
     endTime: Date;
 
     @ManyToOne(() => TeacherEntity, (teacher) => teacher.lessons)
-    @JoinColumn({ name: 'teacherId' }) // teacher_id column bilan bog'lanadi
+    @JoinColumn({ name: 'teacherId' })
     teacher: TeacherEntity;
 
     @ManyToOne(() => StudentEntity)

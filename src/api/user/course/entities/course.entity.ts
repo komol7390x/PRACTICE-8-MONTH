@@ -1,6 +1,7 @@
 import { Roles } from "src/common/enum/roles.enum";
 import { BaseEntity } from "src/core/base.entity";
 import { Column, Entity } from "typeorm";
+import { CourseSetting } from "../enum/cours-name";
 
 @Entity('course')
 export class CourseEntity extends BaseEntity {
@@ -11,7 +12,7 @@ export class CourseEntity extends BaseEntity {
     @Column({ type: 'enum', enum: Roles, default: Roles.SUPER_ADMIN })
     role: Roles
 
-    @Column({ type: 'varchar', default: 'Online course wallet', nullable: true })
+    @Column({ type: 'varchar', default: CourseSetting.NAME, nullable: true })
     name: string
 }
 

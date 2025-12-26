@@ -13,26 +13,27 @@ import { Roles } from 'src/common/enum/roles.enum';
 
 @Injectable()
 export class StudentService extends BaseService<CreateStudentDto, UpdateStudentDto, StudentEntity> {
-  constructor(@InjectRepository(StudentEntity) private readonly studentRepository: Repository<StudentEntity>) { super(studentRepository) }
+  constructor(@InjectRepository(StudentEntity)
+  private readonly studentRepository: Repository<StudentEntity>) { super(studentRepository) }
+
   // --------------------CREATE STUDNENT --------------------
 
   async createStudent(dto: CreateStudentDto) {
-    console.log(1111, dto);
 
-    // const { phoneNumber, tgUsername, tgId, firstName, lastName } = dto
-    // const existStudentTgId = await this.studentRepository.findOne({ where: { tgId } })
-    // if (existStudentTgId) {
-    //   throw new ConflictException(`Telegram Id ${tgId} already exist on student`)
-    // }
-    // const existStudentTel = await this.studentRepository.findOne({ where: { phoneNumber } })
-    // if (existStudentTel) {
-    //   throw new ConflictException(`Tel ${phoneNumber} already exist on student`)
-    // }
-    // const existStudentUsername = await this.studentRepository.findOne({ where: { tgUsername } })
-    // if (existStudentUsername) {
-    //   throw new ConflictException(`Tgusername ${existStudentUsername} already exist on student`)
-    // }
-    // return super.create({ phoneNumber, tgUsername, tgId, firstName, lastName })
+    const { phoneNumber, tgUsername, tgId, firstName, lastName } = dto
+    const existStudentTgId = await this.studentRepository.findOne({ where: { tgId } })
+    if (existStudentTgId) {
+      throw new ConflictException(`Telegram Id ${tgId} already exist on student`)
+    }
+    const existStudentTel = await this.studentRepository.findOne({ where: { phoneNumber } })
+    if (existStudentTel) {
+      throw new ConflictException(`Tel ${phoneNumber} already exist on student`)
+    }
+    const existStudentUsername = await this.studentRepository.findOne({ where: { tgUsername } })
+    if (existStudentUsername) {
+      throw new ConflictException(`Tgusername ${existStudentUsername} already exist on student`)
+    }
+    return super.create({ phoneNumber, tgUsername, tgId, firstName, lastName })
 
   }
   // ----------------------- FIND ALL STUDENTS PAGANATION -----------------------
@@ -40,7 +41,7 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
     page: number = 1,
     limit: number = 10,
     search?: string,
-    status?: StudentStatus,
+    status?: boolean,
     sort: StudentSort = StudentSort.CREATED_AT,
   ) {
     const skip = (page - 1) * limit;
@@ -50,9 +51,9 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
       .where('s.isDeleted = :isDeleted', { isDeleted: false });
 
     // status filter
-    if (status) {
+    if (typeof status == 'boolean') {
       baseQb.andWhere('s.isActive = :isActive', {
-        isActive: status === StudentStatus.ACTIVE,
+        isActive: status = Boolean(status)
       });
     }
 
@@ -126,7 +127,8 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
       throw new BadRequestException('id type is NaN is not true')
     }
     const student = await this.studentRepository.findOne({
-      where: { id, isDeleted: false, role: Roles.STUDENT }
+      where: { id, isDeleted: false, role: Roles.STUDENT },
+      relations: { lessons: true }
     });
     if (!student) {
       throw new NotFoundException(`${id} id student not found`)
@@ -163,11 +165,10 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
   }
   // -------------------- BLOCKED AT --------------------
 
-  async blockedStudent(id: number, blocked: boolean, dto: UpdateStudentDto) {
-    const { blockedReason } = dto
+  async blockedStudent(id: number, active: boolean) {
     await this.findOneById(id)
     const blockedAt = new Date
-    await this.studentRepository.update({ id }, { blockedAt, blockedReason, isActive: blocked })
+    await this.studentRepository.update({ id }, { blockedAt, isActive: active })
     return super.findOneById(id)
   }
 }
