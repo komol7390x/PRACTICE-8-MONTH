@@ -4,11 +4,13 @@ import { AuthService } from './auth.service';
 import { type Response, type Request } from 'express';
 import passport from 'passport';
 import { appConfig } from 'src/config';
+import { ApiOperation } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
     constructor(private authService: AuthService) { }
     @Get('google')
+    @ApiOperation({ summary: 'registration with google' })
     googleLogin(@Req() req: Request, @Res() res: Response) {
         passport.authenticate(
             'google',
@@ -49,7 +51,7 @@ export class AuthController {
     async googleCallback(@Req() req, @Res() res) {
 
         const { item, step } = req.user;
-        
+
         // Agar step 2 bo'lsa
         if (step == 2) {
             await this.authService.generateTokens(item.id, res)

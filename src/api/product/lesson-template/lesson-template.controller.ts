@@ -1,12 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { LessonTemplateService } from './lesson-template.service';
 import { CreateLessonTemplateDto } from './dto/create-lesson-template.dto';
-import { UpdateLessonTemplateDto } from './dto/update-lesson-template.dto';
 import { RolesGuard } from 'src/common/guard/RolesGuard';
 import { AuthGuard } from 'src/common/guard/AuthGuard';
 import { AccessRoles } from 'src/common/decorator/roles.decorator';
 import { Roles } from 'src/common/enum/roles.enum';
-import { ApiOperation, ApiParam } from '@nestjs/swagger';
+import { ApiOperation } from '@nestjs/swagger';
+import { CurrentUser } from 'src/common/decorator/currentUser.decorator';
+import { type IToken } from 'src/infrastructure/token/interface';
 
 @Controller('lesson-template')
 @UseGuards(AuthGuard, RolesGuard)
@@ -14,14 +15,14 @@ export class LessonTemplateController {
   constructor(private readonly lessonTemplateService: LessonTemplateService) { }
   // ------------------------CREATE LESSON TABLE ------------------------
   @Post('create-lesson')
-  @ApiOperation({ summary: 'registration student' })
+
+  @ApiOperation({ summary: 'registration leeson for teacher' })
   @AccessRoles(Roles.TEACHER, 'ID')
 
-  @ApiParam({ type: Number, name: 'teacherId', example: '25' })
   create(
-    @Param('teacherId', ParseIntPipe) teacherId: number,
+    @CurrentUser('user') user: IToken,
     @Body() dto: CreateLessonTemplateDto) {
-    return this.lessonTemplateService.createLessonByTeacher(teacherId, dto);
+    return this.lessonTemplateService.createLessonByTeacher(user.id, dto);
   }
   // ------------------------CREATE LESSON TABLE ------------------------
 
