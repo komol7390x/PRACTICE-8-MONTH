@@ -129,8 +129,9 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
 
   async bookLessonByStudent(studentId: number, dto: BookLessonByStudentDto) {
     const { lessonId, price } = dto
+    
     const lesson = await this.lessonTempRepo.findOne({
-      where: { id: lessonId, },
+      where: { id: lessonId, isActive: true, isDeleted: false, status: BookedLesson.AVAILABLE },
       relations: { teacher: true }
     });
 
@@ -138,8 +139,8 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
 
     const student = await this.studentRepo.findOne({ where: { id: studentId } });
     if (!student) throw new NotFoundException("Student not found");
-    console.log(student);
 
+    await this.processLessonPayment(studentId, price)
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET);

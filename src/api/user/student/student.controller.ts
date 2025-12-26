@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, ParseBoolPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, ParseBoolPipe, ParseIntPipe } from '@nestjs/common';
 import { StudentService } from './student.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
@@ -25,7 +25,9 @@ export class StudentController {
   create(@Body() dto: CreateStudentDto) {
     return this.studentService.createStudent(dto);
   }
+
   // --------------------- GET ALL ---------------------
+  
   @Get()
   @ApiPagination()
   @ApiOperation({ summary: 'for super admin and admin' })
@@ -47,6 +49,7 @@ export class StudentController {
 
     return this.studentService.findAllStudent(pageNumber, limitNumber, search, status, sort);
   }
+
   // --------------------- GET ONE ---------------------
 
   @Get(':id')
@@ -57,6 +60,7 @@ export class StudentController {
     @Param('id') id: string) {
     return this.studentService.findOneStudent(+id);
   }
+
   // --------------------- STUDENT DETAILS ONE ---------------------
 
   @Get('details')
@@ -68,6 +72,7 @@ export class StudentController {
     @CurrentUser() user: IToken) {
     return this.studentService.findOneStudent(user.id, user);
   }
+
   // --------------------- UPDATE ---------------------
 
   @Patch('update/:id')
@@ -92,6 +97,20 @@ export class StudentController {
   ) {
     return this.studentService.blockedStudent(id, active);
   }
+
+  // -------------------- ADD BALANCE --------------------
+
+  @Patch('add-balance/:id')
+
+  @ApiOperation({ summary: 'add balance for student by super admin' })
+  @AccessRoles(Roles.SUPER_ADMIN)
+  addBalance(
+    @Param('id') id: number,
+    @Query('balance', ParseIntPipe) balance: number
+  ) {
+    return this.studentService.addBalance(id, balance);
+  }
+
   // --------------------- SOFT DELETE ---------------------
 
   @Delete('soft-delete/:id')

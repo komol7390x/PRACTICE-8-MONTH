@@ -40,7 +40,6 @@ export class LessonTemplateController {
 
   @Get()
   @ApiOperation({ summary: 'get all book lesson for admin' })
-
   getAllBookLesson() {
     return this.lessonTemplateService.getAllBookLesson()
   }

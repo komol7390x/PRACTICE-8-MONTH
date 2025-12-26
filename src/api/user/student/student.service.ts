@@ -163,6 +163,17 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
       return this.findOneStudent(id, user)
     }
   }
+  // -------------------- ADD BALANCE --------------------
+  async addBalance(id: number, balance: number) {
+    const student = await this.studentRepository.findOne({ where: { id } })
+    if (!student) {
+      throw new NotFoundException(`${id} not found on Student`)
+    }
+    const newBalance = student.wallet + balance
+    await this.studentRepository.update(id, { wallet: newBalance })
+    return await this.findOneStudent(id)
+  }
+
   // -------------------- BLOCKED AT --------------------
 
   async blockedStudent(id: number, active: boolean) {
