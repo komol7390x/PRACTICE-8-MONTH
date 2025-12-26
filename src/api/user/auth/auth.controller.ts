@@ -10,7 +10,7 @@ import { ApiOperation } from '@nestjs/swagger';
 export class AuthController {
     constructor(private authService: AuthService) { }
     @Get('google')
-    @ApiOperation({ summary: 'registration with google' })
+    @ApiOperation({ summary: 'registration with google for teacher' })
     googleLogin(@Req() req: Request, @Res() res: Response) {
         passport.authenticate(
             'google',
@@ -47,6 +47,7 @@ export class AuthController {
     }
 
     @Get('google/callback')
+    @ApiOperation({ summary: 'callback for google get data' })
     @UseGuards(AuthGuard('google'))
     async googleCallback(@Req() req, @Res() res) {
 

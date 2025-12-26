@@ -21,9 +21,9 @@ export class TeacherController {
   constructor(private readonly teacherService: TeacherService) { }
 
   // --------------------- CREATE TEACHER ---------------------
-  @Post('register-teacher')
+  @Post('create')
 
-  @ApiOperation({ summary: 'registration teacher' })
+  @ApiOperation({ summary: 'Create teacher for Admin' })
   @AccessRoles('public')
 
   createTeacher(@Body() dto: CreateTeacherDto) {
@@ -53,7 +53,7 @@ export class TeacherController {
     @Param('id', ParseIntPipe) id: number) {
     return this.teacherService.registrationStep3(id, otp);
   }
-  
+
   // --------------------- SIGN IN TEACHER ---------------------
   @Post('signin')
   @AccessRoles('public')

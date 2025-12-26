@@ -21,7 +21,6 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
   ) { super(lessonTempRepo) }
 
   async createLessonByTeacher(teacherId: number, dto: CreateLessonTemplateDto) {
-    // 1. O'qituvchini topish
     const teacher = await this.teacherRepo.findOne({ where: { id: teacherId } });
     if (!teacher || !teacher.googleRefreshToken) {
       throw new NotFoundException(`O'qituvchi yoki Google Token topilmadi`);
