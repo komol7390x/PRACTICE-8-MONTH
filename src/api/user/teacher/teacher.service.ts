@@ -147,9 +147,10 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
     const baseQb = this.teacherRepository
       .createQueryBuilder('t')
       .leftJoinAndSelect('t.certificates', 'c')
+      .leftJoinAndSelect('t.lessons', 'l')
       .where('t.isDeleted = :isDeleted', { isDeleted: false });
 
-    baseQb.select(['t', 'c']);
+    baseQb.select(['t', 'c', 'l']);
 
     if (status) {
       baseQb.andWhere('t.isActive = :isActive', {
