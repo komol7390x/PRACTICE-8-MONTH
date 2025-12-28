@@ -4,7 +4,7 @@ import { UpdateLessonTemplateDto } from './dto/update-lesson-template.dto';
 import { BaseService } from 'src/infrastructure/base/base.service';
 import { LessonTemplateEntity } from './entities/lesson-template.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, LessThan, MoreThan, Repository } from 'typeorm';
+import { DataSource, ILike, LessThan, MoreThan, Not, Repository } from 'typeorm';
 import { google } from 'googleapis';
 import { TeacherEntity } from 'src/api/user/teacher/entities/teacher.entity';
 import { StudentEntity } from 'src/api/user/student/entities/student.entity';
@@ -13,6 +13,8 @@ import { Cron } from '@nestjs/schedule';
 import { BookLessonByStudentDto } from './dto/book-lesson-by-student.dto';
 import { CourseEntity } from 'src/api/user/course/entities/course.entity';
 import { CourseSetting } from 'src/api/user/course/enum/cours-name';
+import { WeekDays } from './enum/week-day';
+import { IToken } from 'src/infrastructure/token/interface';
 
 @Injectable()
 export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, UpdateLessonTemplateDto, LessonTemplateEntity> {
@@ -110,6 +112,17 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
     if (!meetLink) {
       throw new InternalServerErrorException("Google Meet havolasini yaratishda muammo bo'ldi.");
     }
+    const getDays = new Date(startDate).getDay()
+    const weekDayMap = [
+      WeekDays.SUNDAY,    // 0
+      WeekDays.MONDAY,    // 1
+      WeekDays.TUESDAY,   // 2
+      WeekDays.WEDNESDAY, // 3
+      WeekDays.THURSDAY,  // 4
+      WeekDays.FRIDAY,    // 5
+      WeekDays.SATURDAY,  // 6
+    ];
+    const weekDay = weekDayMap[getDays]
 
     // 5. BAZAGA SAQLASH
     const newLesson = this.lessonTempRepo.create({
@@ -117,6 +130,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
       teacherId: teacher.id,
       googleEventId: String(event.data.id),
       meetLink: meetLink,
+      weekDays: weekDay,
       startTime: startDate,
       endTime: endDate,
       status: BookedLesson.AVAILABLE,
@@ -129,7 +143,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
 
   async bookLessonByStudent(studentId: number, dto: BookLessonByStudentDto) {
     const { lessonId, price } = dto
-    
+
     const lesson = await this.lessonTempRepo.findOne({
       where: { id: lessonId, isActive: true, isDeleted: false, status: BookedLesson.AVAILABLE },
       relations: { teacher: true }
@@ -169,13 +183,163 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
   }
   // ------------------GET ALL LESSON BOOK ------------------
 
-  async getAllBookLesson() {
-    const bookLesson = await this.lessonTempRepo.find({
-      relations: { student: true, teacher: true },
-      where: { isDeleted: false },
-      select: { student: true, teacher: true }
-    })
-    return bookLesson
+  async findAllBookLesson(filters: {
+    page?: number;
+    limit?: number;
+    status?: BookedLesson;
+    weekday?: WeekDays;
+    teacherId?: number;
+    studentId?: number;
+    isPaid?: boolean;
+    search?: string;
+    active?: boolean;
+  }) {
+    // Obyektdan o'zgaruvchilarni ajratib olamiz (default qiymatlar bilan)
+    const {
+      page = 1,
+      limit = 100,
+      status,
+      weekday,
+      teacherId,
+      studentId,
+      isPaid,
+      search,
+      active,
+    } = filters;
+    // 1. Asosiy shartlar
+    let where: any = { isDeleted: false };
+
+    // 2. Filtrlar
+    if (status) where.status = status;
+    if (teacherId) where.teacherId = teacherId;
+    if (studentId) where.studentId = studentId;
+    if (isPaid !== undefined) where.isPaidToTeacher = isPaid;
+    if (active !== undefined) where.isActive = active;
+    if (weekday) where.weekDays = weekday;
+
+    // 3. Search mantiqi
+    if (search) {
+      const isNumber = !isNaN(Number(search));
+      if (isNumber) {
+        where.id = Number(search);
+      } else {
+        where.lessonName = ILike(`%${search}%`);
+      }
+    }
+
+    // 4. Pagination hisoblash
+    // skip - nechtasini tashlab yuborish, take - nechtasini olish
+    const skip = (page - 1) * limit;
+
+    // 5. Ma'lumotlarni olish (findAndCount jami sonini ham qaytaradi)
+    const [data, total] = await this.lessonTempRepo.findAndCount({
+      where,
+      relations: {
+        student: true,
+        teacher: true
+      },
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: skip
+    });
+
+    return {
+      data,
+      meta: {
+        totalItems: total,
+        itemCount: data.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      }
+    };
+  }
+  // ------------------ UPDATE LESSON ------------------
+
+  async updateLessonByTeacher(lessonId: number, teacherId: number, dto: UpdateLessonTemplateDto) {
+    // 1. Darsni va o'qituvchini tekshirish
+    const lesson = await this.lessonTempRepo.findOne({
+      where: { id: lessonId, teacherId, isDeleted: false },
+      relations: { teacher: true }
+    });
+
+    if (!lesson) {
+      throw new NotFoundException("Dars topilmadi yoki sizga tegishli emas");
+    }
+
+    if (lesson.status === BookedLesson.BOOKED) {
+      throw new BadRequestException("Band qilingan darsni o'zgartirib bo'lmaydi");
+    }
+
+    // 2. Vaqtlarni yangilash (agar DTO da kelgan bo'lsa)
+    let startDate = lesson.startTime;
+    let endDate = lesson.endTime;
+    let timeChanged = false;
+
+    if (dto.startTime || dto.finishTime) {
+      timeChanged = true;
+      startDate = dto.startTime
+        ? new Date(Number(dto.startTime) * (dto.startTime < 10000000000 ? 1000 : 1))
+        : lesson.startTime;
+      endDate = dto.finishTime
+        ? new Date(Number(dto.finishTime) * (dto.finishTime < 10000000000 ? 1000 : 1))
+        : lesson.endTime;
+
+      // Vaqt mantiqi tekshiruvi
+      const now = new Date();
+      if (startDate <= now) throw new BadRequestException("O'tmishga darsni ko'chirib bo'lmaydi");
+      if (endDate <= startDate) throw new BadRequestException("Tugash vaqti noto'g'ri");
+
+      // DB To'qnashuvni tekshirish (o'zini hisobga olmagan holda)
+      const existingInDb = await this.lessonTempRepo.findOne({
+        where: {
+          id: Not(lesson.id), // O'zini tekshirmaydi
+          teacherId: teacherId,
+          startTime: LessThan(endDate),
+          endTime: MoreThan(startDate),
+        },
+      });
+      if (existingInDb) throw new BadRequestException("Bu vaqtda boshqa darsingiz bor");
+    }
+
+    // 3. Google Calendar yangilash
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET
+    );
+    oauth2Client.setCredentials({ refresh_token: lesson.teacher.googleRefreshToken });
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+    try {
+      await calendar.events.patch({
+        calendarId: 'primary',
+        eventId: lesson.googleEventId,
+        requestBody: {
+          summary: dto.lessonName ? `Dars: ${dto.lessonName}` : undefined,
+          start: timeChanged ? { dateTime: startDate.toISOString() } : undefined,
+          end: timeChanged ? { dateTime: endDate.toISOString() } : undefined,
+        },
+      });
+    } catch (error) {
+      throw new InternalServerErrorException("Google Calendar'da yangilashda xato: " + error.message);
+    }
+
+    // 4. Hafta kunini qayta hisoblash (agar vaqt o'zgargan bo'lsa)
+    if (timeChanged) {
+      const weekDayMap = [
+        WeekDays.SUNDAY, WeekDays.MONDAY, WeekDays.TUESDAY,
+        WeekDays.WEDNESDAY, WeekDays.THURSDAY, WeekDays.FRIDAY, WeekDays.SATURDAY
+      ];
+      lesson.weekDays = weekDayMap[startDate.getDay()];
+      lesson.startTime = startDate;
+      lesson.endTime = endDate;
+    }
+
+    // 5. Boshqa maydonlarni yangilash
+    if (dto.lessonName) lesson.lessonName = dto.lessonName;
+    if (dto.lessonPrice) lesson.price = dto.lessonPrice;
+
+    return await this.lessonTempRepo.save(lesson);
   }
 
   // ------------------ PROCCESS LESSON PAYMENT ------------------

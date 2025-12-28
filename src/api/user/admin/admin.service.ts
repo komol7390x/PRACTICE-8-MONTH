@@ -70,7 +70,7 @@ export class AdminService
   async getDashboard() {
     const allStudent = await this.studentRepository.findAndCount({ where: { isActive: true, isDeleted: false } })
     console.log(allStudent);
-
+    return allStudent
   }
 
   // --------------------- FIND ALL ADMIN ---------------------
@@ -179,7 +179,7 @@ export class AdminService
       role: admin.role,
     };
     const accessToken = await this.tokenService.accessToken(payload);
-    
+
     res.clearCookie(TokenName.TEACHER_TOKEN)
     res.clearCookie(TokenName.ADMIN_TOKEN)
     res.clearCookie(TokenName.STUDENT_TOKEN)

@@ -22,6 +22,9 @@ export class LessonTemplateEntity extends BaseEntity {
     @Column({ type: 'varchar', default: BookedLesson.AVAILABLE, nullable: true })
     status: string;
 
+    @Column({ type: 'enum', enum: WeekDays, nullable: true })
+    weekDays: WeekDays;
+
     @Column({ default: false, nullable: true })
     isPaidToTeacher: boolean;
 
