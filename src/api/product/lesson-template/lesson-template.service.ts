@@ -19,15 +19,13 @@ import { IToken } from 'src/infrastructure/token/interface';
 @Injectable()
 export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, UpdateLessonTemplateDto, LessonTemplateEntity> {
   private readonly logger = new Logger('DAILY_CLEANUP');
+  
   constructor(
     @InjectRepository(LessonTemplateEntity)
     private readonly lessonTempRepo: Repository<LessonTemplateEntity>,
 
     @InjectRepository(TeacherEntity)
     private readonly teacherRepo: Repository<TeacherEntity>,
-
-    @InjectRepository(CourseEntity)
-    private readonly coursRepo: Repository<CourseEntity>,
 
     @InjectRepository(StudentEntity)
     private readonly studentRepo: Repository<StudentEntity>,
@@ -154,7 +152,6 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
     const student = await this.studentRepo.findOne({ where: { id: studentId } });
     if (!student) throw new NotFoundException("Student not found");
 
-    await this.processLessonPayment(studentId, price)
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET);
@@ -340,57 +337,6 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
     if (dto.lessonPrice) lesson.price = dto.lessonPrice;
 
     return await this.lessonTempRepo.save(lesson);
-  }
-
-  // ------------------ PROCCESS LESSON PAYMENT ------------------
-
-  async processLessonPayment(studentId: number, price: number) {
-
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
-
-    try {
-      // 1. Studentni transaction ichida topish
-      const student = await queryRunner.manager.findOne(StudentEntity, {
-        where: { id: studentId, isActive: true, isDeleted: false }
-      });
-
-      if (!student || student.wallet < price) {
-        throw new BadRequestException("Studentning balansi yetarli emas yoki topilmadi");
-      }
-
-      const courseWallet = await queryRunner.manager.findOne(CourseEntity, {
-        where: { name: CourseSetting.NAME }
-      });
-
-      if (!courseWallet) {
-        throw new BadRequestException("Tizim hamyoni topilmadi");
-      }
-
-      // 3. MANTIQ: Hamma pulni kurs hamyoniga "muzlatish"
-      student.wallet -= price;         // Studentdan to'liq ayiramiz
-      courseWallet.wallet += price;    // Kursga to'liq qo'shamiz
-
-      // 4. Ma'lumotlarni saqlash (queryRunner orqali)
-      await queryRunner.manager.save(student);
-      await queryRunner.manager.save(courseWallet);
-
-      await queryRunner.commitTransaction();
-
-      return {
-        success: true,
-        message: "To'lov qabul qilindi va tizimda muzlatildi",
-        balance: student.wallet
-      };
-
-    } catch (error) {
-      await queryRunner.rollbackTransaction();
-      if (error instanceof BadRequestException) throw error;
-      throw new InternalServerErrorException("To'lov jarayonida xato: " + error.message);
-    } finally {
-      await queryRunner.release();
-    }
   }
 
   // ------------------ CRON EXPIRE TIME ------------------

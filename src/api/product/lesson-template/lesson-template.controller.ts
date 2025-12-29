@@ -110,7 +110,7 @@ export class LessonTemplateController {
     })
   }
 
-  // ------------------ GET ONE LESSON FOR TEACHER ------------------
+  // ------------------ GET ONE LESSON FOR STUDENT ------------------
 
   @Get('student')
   @ApiOperation({ summary: 'Get lesson for student' })
@@ -138,7 +138,7 @@ export class LessonTemplateController {
       search,
       page: pageNumber,
       limit: limitNumber,
-      teacherId: user.id
+      studentId: user.id
     })
   }
 
