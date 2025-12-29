@@ -34,7 +34,6 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
     private readonly crypto: CryptoService,
     private readonly tokenService: TokenService,
     private readonly casheService: CustomCacheService,
-    private readonly authService: AuthService
   ) {
     super(teacherRepository)
   }
@@ -120,7 +119,7 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
     res.clearCookie(TokenName.STUDENT_TOKEN)
 
     await this.tokenService.writeCookie(res, TokenName.TEACHER_TOKEN, accessToken, 30);
-    await this.authService.refreshGoogleToken(teacher.id)
+   
     return successRes({
       token: accessToken,
       user: {

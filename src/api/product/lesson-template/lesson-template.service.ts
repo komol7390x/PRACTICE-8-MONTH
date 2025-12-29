@@ -15,6 +15,7 @@ import { CourseSetting } from 'src/api/user/course/enum/cours-name';
 import { WeekDays } from './enum/week-day';
 import { PaymentService } from '../payment/payment.service';
 import { Roles } from 'src/common/enum/roles.enum';
+import { AuthService } from 'src/api/user/auth/auth.service';
 
 @Injectable()
 export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, UpdateLessonTemplateDto, LessonTemplateEntity> {
@@ -31,7 +32,8 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
     private readonly studentRepo: Repository<StudentEntity>,
 
     private readonly dataSource: DataSource,
-    private readonly paymentService: PaymentService
+    private readonly paymentService: PaymentService,
+    private readonly authService: AuthService
   ) { super(lessonTempRepo) }
 
   // --------------------------- CREATE TEACHER LESSON ---------------------------
@@ -68,7 +70,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
     if (existingInDb) {
       throw new BadRequestException(`Bazada bu vaqtda dars mavjud!`);
     }
-
+    await this.authService.refreshGoogleToken(teacher.id)
     // 3. Google Calendar API sozlash
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
@@ -147,12 +149,12 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
       relations: { teacher: true }
     });
     if (!lesson) throw new NotFoundException("Lesson not found");
-    
+
     const price = lesson.price
 
     const student = await this.studentRepo.findOne({ where: { id: studentId } });
     if (!student) throw new NotFoundException("Student not found");
-    
+
     const payment = await this.paymentService.processLessonPayment({ price, lessonId, studentId, role: Roles.STUDENT })
     if (!payment) {
       throw new ConflictException(`${studentId} not paid`)

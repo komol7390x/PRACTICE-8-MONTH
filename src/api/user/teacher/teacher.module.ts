@@ -10,7 +10,7 @@ import { CustomCacheService } from 'src/infrastructure/cashe-service/nest-cashe-
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TeacherEntity, CertificateEntity]), AuthModule],
+  imports: [TypeOrmModule.forFeature([TeacherEntity, CertificateEntity])],
   controllers: [TeacherController],
   providers: [TeacherService, TokenService, CryptoService, CustomCacheService],
   exports: [TeacherService]
