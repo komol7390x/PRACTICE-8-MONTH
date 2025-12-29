@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { CreateLessonTemplateDto } from './dto/create-lesson-template.dto';
 import { UpdateLessonTemplateDto } from './dto/update-lesson-template.dto';
 import { BaseService } from 'src/infrastructure/base/base.service';
@@ -10,16 +10,16 @@ import { TeacherEntity } from 'src/api/user/teacher/entities/teacher.entity';
 import { StudentEntity } from 'src/api/user/student/entities/student.entity';
 import { BookedLesson } from './enum/booked-type';
 import { Cron } from '@nestjs/schedule';
-import { BookLessonByStudentDto } from './dto/book-lesson-by-student.dto';
 import { CourseEntity } from 'src/api/user/course/entities/course.entity';
 import { CourseSetting } from 'src/api/user/course/enum/cours-name';
 import { WeekDays } from './enum/week-day';
-import { IToken } from 'src/infrastructure/token/interface';
+import { PaymentService } from '../payment/payment.service';
+import { Roles } from 'src/common/enum/roles.enum';
 
 @Injectable()
 export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, UpdateLessonTemplateDto, LessonTemplateEntity> {
   private readonly logger = new Logger('DAILY_CLEANUP');
-  
+
   constructor(
     @InjectRepository(LessonTemplateEntity)
     private readonly lessonTempRepo: Repository<LessonTemplateEntity>,
@@ -30,7 +30,8 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
     @InjectRepository(StudentEntity)
     private readonly studentRepo: Repository<StudentEntity>,
 
-    private dataSource: DataSource
+    private readonly dataSource: DataSource,
+    private readonly paymentService: PaymentService
   ) { super(lessonTempRepo) }
 
   // --------------------------- CREATE TEACHER LESSON ---------------------------
@@ -139,19 +140,23 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
   }
   // ------------------------BOOKED LESSON BY STUDENT------------------------
 
-  async bookLessonByStudent(studentId: number, dto: BookLessonByStudentDto) {
-    const { lessonId, price } = dto
+  async bookLessonByStudent(studentId: number, lessonId: number) {
 
     const lesson = await this.lessonTempRepo.findOne({
       where: { id: lessonId, isActive: true, isDeleted: false, status: BookedLesson.AVAILABLE },
       relations: { teacher: true }
     });
-
     if (!lesson) throw new NotFoundException("Lesson not found");
+    
+    const price = lesson.price
 
     const student = await this.studentRepo.findOne({ where: { id: studentId } });
     if (!student) throw new NotFoundException("Student not found");
-
+    
+    const payment = await this.paymentService.processLessonPayment({ price, lessonId, studentId, role: Roles.STUDENT })
+    if (!payment) {
+      throw new ConflictException(`${studentId} not paid`)
+    }
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET);

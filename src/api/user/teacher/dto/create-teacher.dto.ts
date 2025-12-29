@@ -26,7 +26,7 @@ export class CreateTeacherDto {
     @IsString()
     fullname?: string
 
-    @ApiProperty({ example: 'StrongPassword123' })
+    @ApiProperty({ example: '@Komol12345' })
     @IsString()
     @IsStrongPassword()
     @IsNotEmpty()

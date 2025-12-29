@@ -80,6 +80,7 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
 
   async delete(id: string | number): Promise<IResponse> {
     await this.findOneById(id);
+    
     (await this.repository.delete(id)) as unknown as Entity;
     return successRes({});
   }

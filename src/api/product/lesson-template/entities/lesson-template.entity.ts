@@ -40,11 +40,13 @@ export class LessonTemplateEntity extends BaseEntity {
     @Column({ type: 'timestamptz' })
     endTime: Date;
 
-    @ManyToOne(() => TeacherEntity, (teacher) => teacher.lessons)
+    @ManyToOne(() => TeacherEntity, (teacher) => teacher.lessons,
+        { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'teacherId' })
     teacher: TeacherEntity;
 
-    @ManyToOne(() => StudentEntity)
+    @ManyToOne(() => StudentEntity, (student) => student.lessons,
+        { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'studentId' })
     student: StudentEntity;
 }

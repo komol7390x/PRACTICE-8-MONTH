@@ -7,9 +7,10 @@ import { CertificateEntity } from 'src/api/product/certificate/entities/certific
 import { TokenService } from 'src/infrastructure/token/Token';
 import { CryptoService } from 'src/infrastructure/crypto/crypto.service';
 import { CustomCacheService } from 'src/infrastructure/cashe-service/nest-cashe-service';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TeacherEntity, CertificateEntity])],
+  imports: [TypeOrmModule.forFeature([TeacherEntity, CertificateEntity]), AuthModule],
   controllers: [TeacherController],
   providers: [TeacherService, TokenService, CryptoService, CustomCacheService],
   exports: [TeacherService]

@@ -17,6 +17,7 @@ import { Roles } from 'src/common/enum/roles.enum';
 import { RegisterStep2Dto } from './dto/register-step2';
 import { generateOTP } from 'src/infrastructure/otp-generator/otp-generator';
 import { CustomCacheService } from 'src/infrastructure/cashe-service/nest-cashe-service';
+import { AuthService } from '../auth/auth.service';
 
 export interface ICheckOTP {
   id: number,
@@ -32,7 +33,8 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
   constructor(@InjectRepository(TeacherEntity) private readonly teacherRepository: Repository<TeacherEntity>,
     private readonly crypto: CryptoService,
     private readonly tokenService: TokenService,
-    private readonly casheService: CustomCacheService
+    private readonly casheService: CustomCacheService,
+    private readonly authService: AuthService
   ) {
     super(teacherRepository)
   }
@@ -118,7 +120,7 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
     res.clearCookie(TokenName.STUDENT_TOKEN)
 
     await this.tokenService.writeCookie(res, TokenName.TEACHER_TOKEN, accessToken, 30);
-
+    await this.authService.refreshGoogleToken(teacher.id)
     return successRes({
       token: accessToken,
       user: {

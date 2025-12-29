@@ -14,5 +14,6 @@ import { TokenService } from "src/infrastructure/token/Token";
     ],
     controllers: [AuthController],
     providers: [AuthService, GoogleStrategy, TokenService],
+    exports: [AuthService]
 })
 export class AuthModule { }

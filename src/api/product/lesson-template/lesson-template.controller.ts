@@ -5,10 +5,9 @@ import { RolesGuard } from 'src/common/guard/RolesGuard';
 import { AuthGuard } from 'src/common/guard/AuthGuard';
 import { AccessRoles } from 'src/common/decorator/roles.decorator';
 import { Roles } from 'src/common/enum/roles.enum';
-import { ApiOperation, ApiParam } from '@nestjs/swagger';
+import { ApiOperation } from '@nestjs/swagger';
 import { CurrentUser } from 'src/common/decorator/currentUser.decorator';
 import { type IToken } from 'src/infrastructure/token/interface';
-import { BookLessonByStudentDto } from './dto/book-lesson-by-student.dto';
 import { BookedLesson } from './enum/booked-type';
 import { WeekDays } from './enum/week-day';
 import { ApiLessonFilters, ApiLessonFiltersStudent, ApiLessonFiltersTeacher } from 'src/common/decorator/get-lesson-book';
@@ -32,12 +31,13 @@ export class LessonTemplateController {
   @Post('booked-by-student/:id')
 
   @ApiOperation({ summary: 'book lesson by student' })
-  // @AccessRoles(Roles.STUDENT)
+  // @AccessRoles(Roles.STUDENT, Roles.ADMIN, Roles.SUPER_ADMIN)
+  @AccessRoles('public')
   async bookLessonByStudent(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: BookLessonByStudentDto
+    @Query('lessonId', ParseIntPipe) lessonId: number
   ) {
-    return this.lessonTemplateService.bookLessonByStudent(id, dto)
+    return this.lessonTemplateService.bookLessonByStudent(id, lessonId)
   }
   // --------------------- GET ALL BOOK LESSON ---------------------
 
@@ -116,7 +116,7 @@ export class LessonTemplateController {
   @ApiOperation({ summary: 'Get lesson for student' })
   @ApiLessonFiltersStudent()
 
-  @AccessRoles(Roles.STUDENT, 'ID')
+  @AccessRoles(Roles.STUDENT, 'ID', Roles.SUPER_ADMIN)
   async studentLesson(
     @CurrentUser('user') user: IToken,
     @Query('status') status?: BookedLesson,
