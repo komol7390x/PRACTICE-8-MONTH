@@ -1,26 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { CreateStatisticaDto } from './dto/create-statistica.dto';
-import { UpdateStatisticaDto } from './dto/update-statistica.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { AdminEntity } from 'src/api/user/admin/entities/admin.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class StatisticaService {
-  create(createStatisticaDto: CreateStatisticaDto) {
-    return 'This action adds a new statistica';
-  }
+  constructor(@InjectRepository(AdminEntity) private readonly adminRepo: Repository<AdminEntity>) { }
 
-  findAll() {
-    return `This action returns all statistica`;
-  }
+  async getAdmin() {
+    const [total, active, inactive, deleted] = await Promise.all([
+      this.adminRepo.count(),
+      this.adminRepo.count({ where: { isActive: true } }),
+      this.adminRepo.count({ where: { isActive: false } }),
+      this.adminRepo.count({ where: { isDeleted: true } }),
+    ]);
 
-  findOne(id: number) {
-    return `This action returns a #${id} statistica`;
-  }
-
-  update(id: number, updateStatisticaDto: UpdateStatisticaDto) {
-    return `This action updates a #${id} statistica`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} statistica`;
+    return {
+      all: total,
+      active: active,
+      inactive: inactive,
+      deleted: deleted
+    };
   }
 }
