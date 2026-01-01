@@ -190,11 +190,7 @@ export class AdminService
       token: accessToken,
       user: {
         id: admin.id,
-        username: admin.username,
-        fullname: admin.fullname,
         role: admin.role,
-        createdAt: admin.createdAt,
-        updatedAt: admin.updatedAt,
       },
     });
   }
