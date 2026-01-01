@@ -31,6 +31,7 @@ export class AdminService
   ) {
     super(adminRepo);
   }
+  // --------------------- ONE MODULE INIT ---------------------
 
   async onModuleInit() {
     const superAdmin = await this.adminRepo.findOne({
@@ -66,7 +67,9 @@ export class AdminService
 
     return successRes(data, 201);
   }
+
   // --------------------- DASHBOARD ---------------------
+
   async getDashboard() {
     const allStudent = await this.studentRepository.findAndCount({ where: { isActive: true, isDeleted: false } })
     console.log(allStudent);
@@ -74,11 +77,13 @@ export class AdminService
   }
 
   // --------------------- FIND ALL ADMIN ---------------------
+
   async findAllAdmin(
     page: number = 1,
     limit: number = 100,
     search?: string,
     sort: SortEnum = SortEnum.CREATED_AT,
+    status?: boolean
   ) {
     const skip = (page - 1) * limit;
 
@@ -86,6 +91,10 @@ export class AdminService
     const where: any = {
       isDeleted: false,
     };
+
+    if (typeof status == 'boolean') {
+      where.isActive = Boolean(status)
+    }
 
     // Sort
     const order: FindOptionsOrder<AdminEntity> = {
@@ -116,20 +125,12 @@ export class AdminService
       where,
       order,
       skip,
-      take: limit,
-      select: {
-        id: true,
-        fullname: true,
-        createdAt: true,
-        username: true,
-        role: true,
-        avatarUrl: true,
-        isActive: true,
-      },
+      take: limit
     });
 
     return { admins, total };
   }
+
   // --------------------- UPDATE ---------------------
 
   async updateAdmin(id: number, dto: UpdateAdminDto, user: IToken): Promise<IResponse> {
@@ -158,6 +159,7 @@ export class AdminService
 
     return successRes(updated);
   }
+
   // --------------------- SIGN IN ADMIN ---------------------
 
   async signIn(dto: SigninDto, res: Response) {
@@ -194,6 +196,7 @@ export class AdminService
       },
     });
   }
+
   // --------------------- SIGN OUT ---------------------
 
   async signOut(res: Response, tokenKey: string) {

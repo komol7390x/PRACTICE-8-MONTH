@@ -5,7 +5,7 @@ import { BaseService } from 'src/infrastructure/base/base.service';
 import { TeacherEntity } from './entities/teacher.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Brackets, Repository } from 'typeorm';
-import { LanguageLevel, TeacherSort, TeacherStatus } from './enum/teacher-enum';
+import { LanguageLevel, TeacherSort } from './enum/teacher-enum';
 import { SigninTeacherDto } from './dto/signin-teacher.dto';
 import { CryptoService } from 'src/infrastructure/crypto/crypto.service';
 import { IToken } from 'src/infrastructure/token/interface';
@@ -119,7 +119,7 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
     res.clearCookie(TokenName.STUDENT_TOKEN)
 
     await this.tokenService.writeCookie(res, TokenName.TEACHER_TOKEN, accessToken, 30);
-   
+
     return successRes({
       token: accessToken,
       user: {
@@ -138,7 +138,7 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
     page: number = 1,
     limit: number = 10,
     search?: string,
-    status?: TeacherStatus,
+    status?: boolean,
     level?: LanguageLevel,
     sort: TeacherSort = TeacherSort.CREATED_AT,
     lang?: string,
@@ -153,9 +153,9 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
 
     baseQb.select(['t', 'c', 'l']);
 
-    if (status) {
-      baseQb.andWhere('t.isActive = :isActive', {
-        isActive: status === TeacherStatus.ACTIVE,
+    if (typeof status == 'boolean') {
+      baseQb.andWhere('s.isActive = :isActive', {
+        isActive: status = Boolean(status)
       });
     }
 

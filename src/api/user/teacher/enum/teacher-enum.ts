@@ -1,8 +1,3 @@
-export enum TeacherStatus {
-    ACTIVE = 'active',
-    INACTIVE = 'inactive'
-}
-
 export enum LanguageLevel {
     A1 = 'A1', // Beginner
     A2 = 'A2', // Elementary

@@ -24,15 +24,24 @@ export class CertificateController {
   // ---------------------- GET ALL ----------------------
 
   @Get()
-
+  
   @ApiOperation({ summary: 'Find all for super admin' })
   @AccessRoles(Roles.TEACHER, Roles.SUPER_ADMIN, Roles.ADMIN)
-
+  
   findAll() {
     return this.certificateService.findAllCertificate();
   }
-  // ---------------------- GET ONE ----------------------
+  // ---------------------- GET ONE BY TEACHER ----------------------
 
+  @Get('for-teacher')
+
+  @ApiOperation({ summary: 'Find one for teacher' })
+  @AccessRoles(Roles.TEACHER, 'ID')
+  findOneByTeacher(@CurrentUser('user') user: IToken) {
+    return this.certificateService.findOneCertificate(user.id);
+  }
+  // ---------------------- GET ONE ----------------------
+  
   @Get(':id')
 
   @ApiOperation({ summary: 'Find one for super admin' })
@@ -42,16 +51,6 @@ export class CertificateController {
     return this.certificateService.findOneCertificate(+id);
   }
 
-  // ---------------------- GET ONE BY TEACHER ----------------------
-
-  @Get('for-teacher')
-
-  @ApiOperation({ summary: 'Find one for teacher' })
-  @AccessRoles(Roles.TEACHER)
-
-  findOneByTeacher(@CurrentUser('user') user: IToken) {
-    return this.certificateService.findOneCertificate(user.id);
-  }
 
   // ---------------------- UPDATE ----------------------
 

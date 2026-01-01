@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Res, Query, ParseIntPipe, ParseBoolPipe } from '@nestjs/common';
 import { TeacherService } from './teacher.service';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
@@ -10,7 +10,7 @@ import { SigninTeacherDto } from './dto/signin-teacher.dto';
 import { type Response } from 'express';
 import { ApiPagination } from './swagger/teacher-swagger';
 import { Roles } from 'src/common/enum/roles.enum';
-import { LanguageLevel, TeacherSort, TeacherStatus } from './enum/teacher-enum';
+import { LanguageLevel, TeacherSort } from './enum/teacher-enum';
 import { CurrentUser } from 'src/common/decorator/currentUser.decorator';
 import { type IToken } from 'src/infrastructure/token/interface';
 import { RegisterStep2Dto } from './dto/register-step2';
@@ -86,7 +86,7 @@ export class TeacherController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
     @Query('search') search?: string,
-    @Query('status') status?: TeacherStatus,
+    @Query('status', new ParseBoolPipe({ optional: true })) status?: boolean,
     @Query('level') level?: LanguageLevel,
     @Query('sort') sort?: TeacherSort,
     @Query('lang') lang?: string,

@@ -1,13 +1,14 @@
 import {
   Controller, Get, Post, Body, Patch, Param, Delete, UseGuards,
-  Res, Query, ParseIntPipe
+  Res, Query, ParseIntPipe,
+  ParseBoolPipe
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import { AuthGuard } from 'src/common/guard/AuthGuard';
 import { RolesGuard } from 'src/common/guard/RolesGuard';
-import {  ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AccessRoles } from 'src/common/decorator/roles.decorator';
 import { Roles } from 'src/common/enum/roles.enum';
 import { SigninDto } from 'src/common/dto/signin.dto';
@@ -68,6 +69,7 @@ export class AdminController {
   @ApiQuery({ name: 'page', required: false, type: Number })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false, type: String })
+  @ApiQuery({ name: 'status', required: false, type: Boolean })
   @ApiQuery({ name: 'sort', required: false, enum: SortEnum })
 
   getAll(
@@ -75,6 +77,8 @@ export class AdminController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('sort') sort?: SortEnum,
+    @Query('status', new ParseBoolPipe({ optional: true })) status?: boolean,
+
   ) {
     let pageNumber = page ? parseInt(page, 10) : 1;
     let limitNumber = limit ? parseInt(limit, 10) : 100;
@@ -82,7 +86,7 @@ export class AdminController {
     if (limitNumber < 1) limitNumber = 1;
     if (limitNumber > 100) limitNumber = 100;
     pageNumber = pageNumber < 1 ? 1 : pageNumber
-    return this.adminService.findAllAdmin(pageNumber, limitNumber, search, sort);
+    return this.adminService.findAllAdmin(pageNumber, limitNumber, search, sort, status);
   }
   // --------------------- GET ME ---------------------
   // @Get('me')

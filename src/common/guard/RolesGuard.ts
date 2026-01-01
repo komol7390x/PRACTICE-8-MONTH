@@ -23,6 +23,7 @@ export class RolesGuard implements CanActivate {
     if (!roles || roles.includes('public') || roles.length === 0) {
       return true;
     }
+    
     if (
       (req.user?.role && roles.includes(req.user.role)) ||
       (roles.includes('ID') && req.user?.id == req.params.id)
