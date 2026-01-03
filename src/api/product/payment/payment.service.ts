@@ -5,12 +5,11 @@ import { BaseService } from 'src/infrastructure/base/base.service';
 import { PaymentEntity } from './entities/payment.entity';
 import { DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CourseEntity } from 'src/api/user/course/entities/course.entity';
 import { StudentEntity } from 'src/api/user/student/entities/student.entity';
-import { CourseSetting } from 'src/api/user/course/enum/cours-name';
 import { Roles } from 'src/common/enum/roles.enum';
-import { LessonTemplateEntity } from '../lesson-template/entities/lesson-template.entity';
 import { PaymentStatus } from './enum/payment-status';
+import { CourseSetting } from '../course/enum/cours-name';
+import { CourseEntity } from '../course/entities/course.entity';
 
 @Injectable()
 export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentDto, PaymentEntity> {

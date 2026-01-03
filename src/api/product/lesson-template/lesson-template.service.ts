@@ -10,12 +10,12 @@ import { TeacherEntity } from 'src/api/user/teacher/entities/teacher.entity';
 import { StudentEntity } from 'src/api/user/student/entities/student.entity';
 import { BookedLesson } from './enum/booked-type';
 import { Cron } from '@nestjs/schedule';
-import { CourseEntity } from 'src/api/user/course/entities/course.entity';
-import { CourseSetting } from 'src/api/user/course/enum/cours-name';
 import { WeekDays } from './enum/week-day';
 import { PaymentService } from '../payment/payment.service';
 import { Roles } from 'src/common/enum/roles.enum';
 import { AuthService } from 'src/api/user/auth/auth.service';
+import { CourseEntity } from '../course/entities/course.entity';
+import { CourseSetting } from '../course/enum/cours-name';
 
 @Injectable()
 export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, UpdateLessonTemplateDto, LessonTemplateEntity> {
@@ -232,10 +232,8 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
     }
 
     // 4. Pagination hisoblash
-    // skip - nechtasini tashlab yuborish, take - nechtasini olish
     const skip = (page - 1) * limit;
 
-    // 5. Ma'lumotlarni olish (findAndCount jami sonini ham qaytaradi)
     const [data, total] = await this.lessonTempRepo.findAndCount({
       where,
       relations: {
@@ -247,6 +245,19 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
       skip: skip
     });
 
+    const activeCount = await this.lessonTempRepo.count({
+      where: { ...where, isActive: true, isDeleted: false },
+    });
+
+    const inactiveCount = await this.lessonTempRepo.count({
+      where: { ...where, isActive: false, isDeleted: false },
+    });
+
+    const deletedCount = await this.lessonTempRepo.count({
+      where: { ...where, isDeleted: true },
+    });
+
+    // 5. Natijani qaytarish
     return {
       data,
       meta: {
@@ -255,7 +266,12 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
         itemsPerPage: limit,
         totalPages: Math.ceil(total / limit),
         currentPage: page,
-      }
+      },
+      stats: {
+        active: activeCount,
+        inactive: inactiveCount,
+        deleted: deletedCount,
+      },
     };
   }
   // ------------------ UPDATE LESSON ------------------

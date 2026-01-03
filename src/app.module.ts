@@ -18,8 +18,8 @@ import { AuthModule } from './api/user/auth/auth.module';
 import { BotModule } from './api/product/bot/bot.module';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { session } from 'telegraf';
-import { CourseModule } from './api/user/course/course.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { CourseModule } from './api/product/course/course.module';
 @Module({
     imports: [
         ConfigModule.forRoot({

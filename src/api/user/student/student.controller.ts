@@ -70,7 +70,7 @@ export class StudentController {
 
   getDetails(
     @CurrentUser() user: IToken) {
-    return this.studentService.findOneStudent(user.id, user);
+    return this.studentService.findOneStudent(user.id);
   }
 
   // --------------------- UPDATE ---------------------

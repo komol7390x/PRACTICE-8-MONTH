@@ -81,7 +81,6 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
           : sort === StudentSort.TG_USERNAME ? 's.tgUsername'
             : `s.${sort}`;
 
-    // list query
     const [students, total] = await baseQb
       .clone()
       .orderBy(orderByField, 'DESC')
@@ -89,26 +88,28 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
       .take(limit)
       .getManyAndCount();
 
-    // statistics
+    // 2. Statistikalarni hisoblash
     const activeCount = await this.studentRepository.count({
-      where: { isActive: true, isDeleted: false },
+      where: { isActive: true},
     });
 
     const inactiveCount = await this.studentRepository.count({
-      where: { isActive: false, isDeleted: false },
+      where: { isActive: false},
     });
 
     const deletedCount = await this.studentRepository.count({
       where: { isDeleted: true },
     });
 
+    // 3. Natijani qaytarish (Siz xohlagan meta formatida)
     return {
       data: students,
       meta: {
-        total,
-        page,
-        limit,
+        totalItems: total,
+        itemCount: students.length,
+        itemsPerPage: limit,
         totalPages: Math.ceil(total / limit),
+        currentPage: page,
       },
       stats: {
         active: activeCount,
@@ -118,10 +119,9 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
     };
   }
 
-
   // --------------------- FIND ONE STUDENT ---------------------
 
-  async findOneStudent(id: number, user?: IToken) {
+  async findOneStudent(id: number) {
 
     if (isNaN(id)) {
       throw new BadRequestException('id type is NaN is not true')
@@ -149,7 +149,7 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
         firstName: firstName ?? student.firstName,
         lastName: lastName ?? student.lastName,
       })
-      return this.findOneStudent(id, user)
+      return this.findOneStudent(id)
     }
 
     if (user.role == Roles.SUPER_ADMIN) {
@@ -160,7 +160,7 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
         tgUsername: tgUsername ?? student.tgUsername,
         tgId: tgId ?? student.tgId
       })
-      return this.findOneStudent(id, user)
+      return this.findOneStudent(id)
     }
   }
   // -------------------- ADD BALANCE --------------------

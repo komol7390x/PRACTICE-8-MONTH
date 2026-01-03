@@ -19,6 +19,8 @@ import { type Response } from 'express';
 import { type IToken } from 'src/infrastructure/token/interface';
 import { TokenName } from 'src/common/enum/token-name';
 import { SortEnum } from './enum/admin-enum';
+import { RegisterStep2Dto } from '../teacher/dto/register-step2';
+import { ConfirmOtpDto } from './dto/confirm-tel';
 
 @Controller('admin')
 @UseGuards(AuthGuard, RolesGuard)
@@ -36,6 +38,18 @@ export class AdminController {
   createAdmin(@Body() dto: CreateAdminDto) {
     return this.adminService.createAdmin(dto);
   }
+
+  // ----------------------- CONFIRM TEL -----------------------
+
+  @Post('confirm-tel')
+
+  @ApiOperation({ summary: 'Confirm tel' })
+  @AccessRoles('public')
+    
+  async confirmTel(@Body() dto: ConfirmOtpDto) {
+    return this.adminService.confirmTel(dto);
+  }
+
   // --------------------- SIGN IN ADMIN ---------------------
 
   @Post('signin')

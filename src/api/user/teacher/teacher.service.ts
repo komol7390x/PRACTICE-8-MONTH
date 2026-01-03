@@ -53,6 +53,7 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
     return super.create({ ...dto, password: hashedPassword });
   }
 
+
   // --------------------- REGISTER STEP-2 TEACHER ---------------------
 
   async registrationStep2(id: number, dto: RegisterStep2Dto) {
@@ -199,15 +200,16 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
     return {
       data: teachers,
       meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit)
+        totalItems: total,
+        itemCount: teachers.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
       },
       stats: {
         active: activeCount,
         inactive: inactiveCount,
-        deleted: deletedCount
+        deleted: deletedCount,
       },
     };
   }

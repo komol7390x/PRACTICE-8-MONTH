@@ -30,6 +30,7 @@ export class TeacherController {
     return this.teacherService.createTeacher(dto);
   }
 
+
   // --------------------- REGISTER STEP-2 TEACHER ---------------------
   @Post('register-step2/:id')
   @AccessRoles(Roles.TEACHER, 'ID')

@@ -1,4 +1,4 @@
-import { HttpException, Injectable, OnModuleInit } from '@nestjs/common';
+import { ConflictException, HttpException, Injectable, OnModuleInit } from '@nestjs/common';
 import { CreateAdminDto } from './dto/create-admin.dto';
 import { UpdateAdminDto } from './dto/update-admin.dto';
 import { BaseService } from 'src/infrastructure/base/base.service';
@@ -18,6 +18,10 @@ import { type Response } from 'express';
 import { TokenName } from 'src/common/enum/token-name';
 import { SortEnum } from './enum/admin-enum';
 import { StudentEntity } from '../student/entities/student.entity';
+import { RegisterStep2Dto } from '../teacher/dto/register-step2';
+import { generateOTP } from 'src/infrastructure/otp-generator/otp-generator';
+import { CustomCacheService } from 'src/infrastructure/cashe-service/nest-cashe-service';
+import { ConfirmOtpDto } from './dto/confirm-tel';
 @Injectable()
 export class AdminService
   extends BaseService<CreateAdminDto, UpdateAdminDto, AdminEntity>
@@ -28,6 +32,7 @@ export class AdminService
     @InjectRepository(StudentEntity) private readonly studentRepository: Repository<StudentEntity>,
     private readonly tokenService: TokenService,
     private readonly crypto: CryptoService,
+    private readonly casheService: CustomCacheService,
   ) {
     super(adminRepo);
   }
@@ -68,6 +73,23 @@ export class AdminService
     return successRes(data, 201);
   }
 
+  // ----------------------- CONFIRM TEL -----------------------
+  async confirmTel(dto: ConfirmOtpDto) {
+    const { phoneNumber } = dto
+    const existPhoneNumber = await this.adminRepo.findOne({ where: { phoneNumber } })
+    if (existPhoneNumber) {
+      throw new ConflictException(`${phoneNumber} already exist on Teacher`)
+    }
+    const otp = generateOTP()
+    const payload = {
+      phoneNumber,
+      id: 0,
+      sek: 300
+    }
+    this.casheService.set(String(otp), payload, 300)
+    return successRes({ otp, sek: 300 })
+  }
+
   // --------------------- DASHBOARD ---------------------
 
   async getDashboard() {
@@ -87,19 +109,16 @@ export class AdminService
   ) {
     const skip = (page - 1) * limit;
 
-    // Default where
-    const where: any = {
-      isDeleted: false,
-    };
-
-    if (typeof status == 'boolean') {
-      where.isActive = Boolean(status)
+    // 1. Asosiy filtr (Default where)
+    const where: any = { isDeleted: false };
+    if (typeof status === 'boolean') {
+      where.isActive = status;
     }
 
-    // Sort
-    const order: FindOptionsOrder<AdminEntity> = {
-      [sort]: 'DESC',
-    };
+    let admins: AdminEntity[];
+    let total: number;
+
+    // 2. Ma'lumotlarni olish (Search bor yoki yo'qligiga qarab)
     if (search) {
       const qb = this.adminRepo.createQueryBuilder('a')
         .where('a.isDeleted = :isDeleted', { isDeleted: false })
@@ -111,24 +130,61 @@ export class AdminService
             qb.orWhere('a.phoneNumber = :phoneNumber', { phoneNumber: search });
             qb.orWhere('a.username ILIKE :username', { username: `%${search}%` });
           })
-        )
+        );
+
+      if (typeof status === 'boolean') {
+        qb.andWhere('a.isActive = :isActive', { isActive: status });
+      }
+
+      const [searchAdmins, searchTotal] = await qb
         .orderBy(`a.${sort}`, 'DESC')
         .skip(skip)
-        .take(limit);
+        .take(limit)
+        .getManyAndCount();
 
-      const [admins, total] = await qb.getManyAndCount();
-      return { admins, total };
+      admins = searchAdmins;
+      total = searchTotal;
+    } else {
+      const [findAdmins, findTotal] = await this.adminRepo.findAndCount({
+        where,
+        order: { [sort]: 'DESC' },
+        skip,
+        take: limit,
+      });
+
+      admins = findAdmins;
+      total = findTotal;
     }
 
-    // Agar search bo‘lmasa oddiy findAndCount
-    const [admins, total] = await this.adminRepo.findAndCount({
-      where,
-      order,
-      skip,
-      take: limit
+    // 3. Statistikalarni hisoblash
+    const activeCount = await this.adminRepo.count({
+      where: { isActive: true },
     });
 
-    return { admins, total };
+    const inactiveCount = await this.adminRepo.count({
+      where: { isActive: false },
+    });
+
+    const deletedCount = await this.adminRepo.count({
+      where: { isDeleted: true },
+    });
+
+    // 4. Yakuniy natija
+    return {
+      data: admins,
+      meta: {
+        totalItems: total,
+        itemCount: admins.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      },
+      stats: {
+        active: activeCount,
+        inactive: inactiveCount,
+        deleted: deletedCount,
+      },
+    };
   }
 
   // --------------------- UPDATE ---------------------

@@ -17,6 +17,7 @@ import { ApiLessonFilters, ApiLessonFiltersStudent, ApiLessonFiltersTeacher } fr
 export class LessonTemplateController {
   constructor(private readonly lessonTemplateService: LessonTemplateService) { }
   // ------------------------CREATE LESSON TABLE ------------------------
+
   @Post('create-lesson')
 
   @ApiOperation({ summary: 'registration leeson for teacher' })
@@ -27,7 +28,9 @@ export class LessonTemplateController {
     @Body() dto: CreateLessonTemplateDto) {
     return this.lessonTemplateService.createLessonByTeacher(user?.id, dto);
   }
+  
   // --------------------- BOOKED LESSON BY STUDENT ---------------------
+
   @Post('booked-by-student/:id')
 
   @ApiOperation({ summary: 'book lesson by student' })
