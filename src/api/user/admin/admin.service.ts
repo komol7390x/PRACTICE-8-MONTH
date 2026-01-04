@@ -105,12 +105,18 @@ export class AdminService
     limit: number = 100,
     search?: string,
     sort: SortEnum = SortEnum.CREATED_AT,
-    status?: boolean
+    status?: boolean,
+    isDeleted?: boolean,
   ) {
     const skip = (page - 1) * limit;
 
     // 1. Asosiy filtr (Default where)
-    const where: any = { isDeleted: false };
+    const where: any = {};
+
+    if (typeof isDeleted === 'boolean') {
+      where.isDeleted = isDeleted;
+    }
+
     if (typeof status === 'boolean') {
       where.isActive = status;
     }

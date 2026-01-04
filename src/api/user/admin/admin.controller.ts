@@ -45,7 +45,7 @@ export class AdminController {
 
   @ApiOperation({ summary: 'Confirm tel' })
   @AccessRoles('public')
-    
+
   async confirmTel(@Body() dto: ConfirmOtpDto) {
     return this.adminService.confirmTel(dto);
   }
@@ -84,6 +84,7 @@ export class AdminController {
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'search', required: false, type: String })
   @ApiQuery({ name: 'status', required: false, type: Boolean })
+  @ApiQuery({ name: 'isDeleted', required: false, type: Boolean })
   @ApiQuery({ name: 'sort', required: false, enum: SortEnum })
 
   getAll(
@@ -92,6 +93,7 @@ export class AdminController {
     @Query('search') search?: string,
     @Query('sort') sort?: SortEnum,
     @Query('status', new ParseBoolPipe({ optional: true })) status?: boolean,
+    @Query('isDeleted', new ParseBoolPipe({ optional: true })) isDeleted?: boolean,
 
   ) {
     let pageNumber = page ? parseInt(page, 10) : 1;
@@ -100,7 +102,7 @@ export class AdminController {
     if (limitNumber < 1) limitNumber = 1;
     if (limitNumber > 100) limitNumber = 100;
     pageNumber = pageNumber < 1 ? 1 : pageNumber
-    return this.adminService.findAllAdmin(pageNumber, limitNumber, search, sort, status);
+    return this.adminService.findAllAdmin(pageNumber, limitNumber, search, sort, status, isDeleted);
   }
   // --------------------- GET ME ---------------------
   // @Get('me')
