@@ -10,6 +10,8 @@ import { StudentSort } from './enum/student-sort';
 import { type IToken } from 'src/infrastructure/token/interface';
 import { successRes } from 'src/infrastructure/response/success.response';
 import { Roles } from 'src/common/enum/roles.enum';
+import { generateOTP } from 'src/infrastructure/otp-generator/otp-generator';
+import { ConfirmPhoneDto } from './dto/confirm-phone';
 
 @Injectable()
 export class StudentService extends BaseService<CreateStudentDto, UpdateStudentDto, StudentEntity> {
@@ -31,11 +33,24 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
     }
     const existStudentUsername = await this.studentRepository.findOne({ where: { tgUsername } })
     if (existStudentUsername) {
-      throw new ConflictException(`Tgusername ${existStudentUsername} already exist on student`)
+      throw new ConflictException(`Tgusername ${tgUsername} already exist on student`)
     }
     return super.create({ phoneNumber, tgUsername, tgId, firstName, lastName })
 
   }
+
+  // ----------------------- CONFIRM PHONE -----------------------
+
+  async confirmPhone(dto: ConfirmPhoneDto) {
+    const { phoneNumber } = dto
+    const student = await this.studentRepository.findOne({ where: { phoneNumber } })
+    if (student) {
+      throw new ConflictException(`Student with phone number ${phoneNumber} already exists`);
+    }
+    const otp = generateOTP();
+    return successRes({ otp }, 200);
+  }
+
   // ----------------------- FIND ALL STUDENTS PAGANATION -----------------------
   async findAllStudent(
     page: number = 1,
@@ -43,17 +58,23 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
     search?: string,
     status?: boolean,
     sort: StudentSort = StudentSort.CREATED_AT,
+    isDeleted?: boolean,
   ) {
     const skip = (page - 1) * limit;
 
     const baseQb = this.studentRepository
       .createQueryBuilder('s')
-      .where('s.isDeleted = :isDeleted', { isDeleted: false });
 
     // status filter
     if (typeof status == 'boolean') {
       baseQb.andWhere('s.isActive = :isActive', {
         isActive: status = Boolean(status)
+      });
+    }
+    //isDeleted filter
+    if (typeof isDeleted == 'boolean') {
+      baseQb.andWhere('s.isDeleted = :isDeleted', {
+        isDeleted: isDeleted = Boolean(isDeleted)
       });
     }
 
@@ -90,11 +111,11 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
 
     // 2. Statistikalarni hisoblash
     const activeCount = await this.studentRepository.count({
-      where: { isActive: true},
+      where: { isActive: true },
     });
 
     const inactiveCount = await this.studentRepository.count({
-      where: { isActive: false},
+      where: { isActive: false },
     });
 
     const deletedCount = await this.studentRepository.count({

@@ -124,7 +124,7 @@ export class LessonTemplateController {
   @ApiOperation({ summary: 'Get lesson for student' })
   @ApiLessonFiltersStudent()
 
-  @AccessRoles(Roles.STUDENT, 'ID', Roles.SUPER_ADMIN)
+  @AccessRoles(Roles.STUDENT, 'ID')
   async studentLesson(
     @CurrentUser('user') user: IToken,
     @Query('status') status?: BookedLesson,

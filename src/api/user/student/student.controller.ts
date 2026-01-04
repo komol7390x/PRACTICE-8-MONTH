@@ -11,6 +11,7 @@ import { Roles } from 'src/common/enum/roles.enum';
 import { StudentSort } from './enum/student-sort';
 import { CurrentUser } from 'src/common/decorator/currentUser.decorator';
 import { type IToken } from 'src/infrastructure/token/interface';
+import { ConfirmPhoneDto } from './dto/confirm-phone';
 
 @Controller('student')
 @UseGuards(AuthGuard, RolesGuard)
@@ -26,8 +27,18 @@ export class StudentController {
     return this.studentService.createStudent(dto);
   }
 
+  // --------------------- CONFIRM STUDENT ---------------------
+  @Post('confirm')
+
+  @ApiOperation({ summary: 'confirm Phone student' })
+  @AccessRoles(Roles.ADMIN, Roles.SUPER_ADMIN)
+
+  confirm(@Body() dto: ConfirmPhoneDto) {
+    return this.studentService.confirmPhone(dto);
+  }
+
   // --------------------- GET ALL ---------------------
-  
+
   @Get()
   @ApiPagination()
   @ApiOperation({ summary: 'for super admin and admin' })
@@ -38,6 +49,7 @@ export class StudentController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('status', new ParseBoolPipe({ optional: true })) status?: boolean,
+    @Query('isDeleted', new ParseBoolPipe({ optional: true })) isDeleted?: boolean,
     @Query('sort') sort?: StudentSort,
   ) {
     let pageNumber = page ? parseInt(page, 10) : 1;
@@ -47,7 +59,7 @@ export class StudentController {
     if (limitNumber > 100) limitNumber = 100;
     pageNumber = pageNumber < 1 ? 1 : pageNumber
 
-    return this.studentService.findAllStudent(pageNumber, limitNumber, search, status, sort);
+    return this.studentService.findAllStudent(pageNumber, limitNumber, search, status, sort, isDeleted);
   }
 
   // --------------------- GET ONE ---------------------
@@ -118,8 +130,11 @@ export class StudentController {
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
   @ApiOperation({ summary: 'soft delete student by admin and super admin' })
 
-  softDelete(@Param('id') id: string) {
-    return this.studentService.softDelete(+id);
+  softDelete(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('status', ParseBoolPipe) status?: boolean
+  ) {
+    return this.studentService.softDelete(+id, status);
   }
 
   // --------------------- DELETE ---------------------
@@ -128,7 +143,7 @@ export class StudentController {
 
   @AccessRoles(Roles.SUPER_ADMIN)
   @ApiOperation({ summary: 'delete student by and super admin' })
-  delete(@Param('id') id: string) {
+  delete(@Param('id', ParseIntPipe) id: number) {
     return this.studentService.delete(+id);
   }
 }
