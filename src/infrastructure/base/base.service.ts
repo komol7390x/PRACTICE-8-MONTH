@@ -86,7 +86,7 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
   }
   // ---------------- SOFT DELETE ----------------
 
-  async softDelete(id: string | number, status?: boolean): Promise<IResponse> {
+  async softDelete(id: string | number, status: boolean = false): Promise<IResponse> {
     const user = await this.repository.findOne({ where: { id } });
     if (!user) {
       throw new HttpException('User not found', 404);

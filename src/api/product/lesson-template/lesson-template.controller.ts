@@ -11,6 +11,7 @@ import { type IToken } from 'src/infrastructure/token/interface';
 import { BookedLesson } from './enum/booked-type';
 import { WeekDays } from './enum/week-day';
 import { ApiLessonFilters, ApiLessonFiltersStudent, ApiLessonFiltersTeacher } from 'src/common/decorator/get-lesson-book';
+import { UpdateLessonTemplateDto } from './dto/update-lesson-template.dto';
 
 @Controller('lesson-template')
 @UseGuards(AuthGuard, RolesGuard)
@@ -21,14 +22,18 @@ export class LessonTemplateController {
   @Post('create-lesson')
 
   @ApiOperation({ summary: 'registration leeson for teacher' })
-  @AccessRoles(Roles.TEACHER, 'ID')
+  @AccessRoles(Roles.TEACHER, 'ID', Roles.SUPER_ADMIN, Roles.ADMIN)
 
   create(
     @CurrentUser('user') user: IToken,
     @Body() dto: CreateLessonTemplateDto) {
-    return this.lessonTemplateService.createLessonByTeacher(user?.id, dto);
+    if (user.role == Roles.TEACHER) {
+      return this.lessonTemplateService.createLessonByTeacher(user?.id, dto);
+    } else if (user.role == Roles.ADMIN || user.role == Roles.SUPER_ADMIN) {
+      return this.lessonTemplateService.createLessonByTeacher(dto.teacherId, dto);
+    }
   }
-  
+
   // --------------------- BOOKED LESSON BY STUDENT ---------------------
 
   @Post('booked-by-student/:id')
@@ -148,12 +153,12 @@ export class LessonTemplateController {
   // ------------------ UPDATE LESSON ------------------
   @Patch(':id')
   @ApiOperation({ summary: "Dars ma'lumotlarini yangilash" })
-  @AccessRoles(Roles.TEACHER, 'ID')
+  @AccessRoles(Roles.TEACHER, 'ID', Roles.SUPER_ADMIN)
 
   async update(
     @Param('id') id: number,
     @CurrentUser('user') user: IToken,
-    @Body() dto: Partial<CreateLessonTemplateDto>
+    @Body() dto: UpdateLessonTemplateDto
   ) {
     return this.lessonTemplateService.updateLessonByTeacher(id, user.id, dto);
   }

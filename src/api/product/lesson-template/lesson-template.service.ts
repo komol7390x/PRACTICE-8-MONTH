@@ -39,14 +39,15 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
   // --------------------------- CREATE TEACHER LESSON ---------------------------
 
   async createLessonByTeacher(teacherId: number, dto: CreateLessonTemplateDto) {
+    const { lessonName, finishTime, lessonPrice, startTime } = dto
     const teacher = await this.teacherRepo.findOne({ where: { id: teacherId } });
     if (!teacher || !teacher.googleRefreshToken) {
       throw new NotFoundException(`O'qituvchi yoki Google Token topilmadi`);
     }
 
     // 2. Vaqtlarni Date formatiga o'tkazish
-    const startDate = new Date(Number(dto.startTime) * (dto.startTime < 10000000000 ? 1000 : 1));
-    const endDate = new Date(Number(dto.finishTime) * (dto.finishTime < 10000000000 ? 1000 : 1));
+    const startDate = new Date(Number(startTime) * (startTime < 10000000000 ? 1000 : 1));
+    const endDate = new Date(Number(finishTime) * (finishTime < 10000000000 ? 1000 : 1));
     const now = new Date(); // Hozirgi vaqt
 
     // --- 1-TEKSHIRUV: O'TMISHGA DARS QO'SHISHNI TAQIQLASH ---
@@ -97,7 +98,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
       calendarId: 'primary',
       conferenceDataVersion: 1,
       requestBody: {
-        summary: `Dars: ${dto.lessonName}`,
+        summary: `Dars: ${lessonName}`,
         start: { dateTime: startDate.toISOString() },
         end: { dateTime: endDate.toISOString() },
         conferenceData: {
@@ -127,7 +128,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
 
     // 5. BAZAGA SAQLASH
     const newLesson = this.lessonTempRepo.create({
-      lessonName: dto.lessonName,
+      lessonName: lessonName,
       teacherId: teacher.id,
       googleEventId: String(event.data.id),
       meetLink: meetLink,
@@ -135,7 +136,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
       startTime: startDate,
       endTime: endDate,
       status: BookedLesson.AVAILABLE,
-      price: dto.lessonPrice
+      price: lessonPrice
     });
 
     return await this.lessonTempRepo.save(newLesson);

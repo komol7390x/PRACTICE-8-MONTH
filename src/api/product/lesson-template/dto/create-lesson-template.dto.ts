@@ -1,6 +1,6 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { WeekDays } from "../enum/week-day";
-import { IsEnum, IsNotEmpty, IsNumber, IsString } from "class-validator";
+import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
 
 export class CreateLessonTemplateDto {
     @ApiProperty({ type: 'number', example: 175554484 })
@@ -22,4 +22,9 @@ export class CreateLessonTemplateDto {
     @IsNumber()
     @IsNotEmpty()
     lessonPrice: number
+
+    @ApiPropertyOptional({ type: 'number', example: 1 })
+    @IsNumber()
+    @IsOptional()
+    teacherId: number
 }

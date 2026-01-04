@@ -162,7 +162,7 @@ export class TeacherController {
   @Patch(':id')
 
   @ApiOperation({ summary: 'get one teacher' })
-  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, 'ID')
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.TEACHER, Roles.ADMIN, 'ID')
 
   update(@Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateTeacherDto,
