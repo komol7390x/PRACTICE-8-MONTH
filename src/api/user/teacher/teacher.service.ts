@@ -155,7 +155,7 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
     baseQb.select(['t', 'c', 'l']);
 
     if (typeof status == 'boolean') {
-      baseQb.andWhere('s.isActive = :isActive', {
+      baseQb.andWhere('t.isActive = :isActive', {
         isActive: status = Boolean(status)
       });
     }
