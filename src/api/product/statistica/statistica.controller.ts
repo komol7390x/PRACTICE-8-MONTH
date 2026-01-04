@@ -20,4 +20,14 @@ export class StatisticaController {
     return this.statisticaService.getAdmin();
   }
 
+  // ------------------- GET TEACHER -------------------
+  @Get('teacher')
+
+  @ApiOperation({ summary: 'Get admin statistics' })
+  @AccessRoles(Roles.SUPER_ADMIN,Roles.ADMIN)
+
+  getTeacher() {
+    return this.statisticaService.getTecher();
+  }
+
 }

@@ -9,6 +9,7 @@ export function ApiPagination() {
         ApiQuery({ name: 'limit', required: false, type: Number }),
         ApiQuery({ name: 'lang', required: false, type: String }),
         ApiQuery({ name: 'status', required: false, type: Boolean }),
+        ApiQuery({ name: 'isDeleted', required: false, type: Boolean }),
 
         ApiQuery({ name: 'level', required: false, enum: LanguageLevel }),
         ApiQuery({ name: 'sort', required: false, enum: TeacherSort }),

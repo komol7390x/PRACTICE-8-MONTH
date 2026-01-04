@@ -14,6 +14,7 @@ import { LanguageLevel, TeacherSort } from './enum/teacher-enum';
 import { CurrentUser } from 'src/common/decorator/currentUser.decorator';
 import { type IToken } from 'src/infrastructure/token/interface';
 import { RegisterStep2Dto } from './dto/register-step2';
+import { ConfirmmTelEmailDto } from './dto/confirmm-tel-email';
 
 @Controller('teacher')
 @UseGuards(AuthGuard, RolesGuard)
@@ -28,6 +29,16 @@ export class TeacherController {
 
   createTeacher(@Body() dto: CreateTeacherDto) {
     return this.teacherService.createTeacher(dto);
+  }
+
+  // --------------------- CREATE TEACHER ---------------------
+  @Post('confirm-tel-email')
+
+  @ApiOperation({ summary: 'Create teacher for Admin' })
+  @AccessRoles('public')
+
+  confirm(@Body() dto: ConfirmmTelEmailDto) {
+    return this.teacherService.confirmPhoneEmail(dto);
   }
 
 
@@ -88,6 +99,7 @@ export class TeacherController {
     @Query('limit') limit?: string,
     @Query('search') search?: string,
     @Query('status', new ParseBoolPipe({ optional: true })) status?: boolean,
+    @Query('isDeleted', new ParseBoolPipe({ optional: true })) isDeleted?: boolean,
     @Query('level') level?: LanguageLevel,
     @Query('sort') sort?: TeacherSort,
     @Query('lang') lang?: string,
@@ -107,7 +119,8 @@ export class TeacherController {
       status,
       level,
       sort,
-      lang
+      lang,
+      isDeleted
     );
   }
   // --------------------- GET ME ---------------------
@@ -163,8 +176,9 @@ export class TeacherController {
   @ApiOperation({ summary: 'soft delete teacher' })
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
 
-  softDelete(@Param('id', ParseIntPipe) id: number) {
-    return this.teacherService.softDelete(+id);
+  softDelete(@Param('id', ParseIntPipe) id: number,
+    @Query('status', ParseBoolPipe) status?: boolean) {
+    return this.teacherService.softDelete(+id, status);
   }
   // --------------------- HARD DELETE ---------------------
 
@@ -176,7 +190,5 @@ export class TeacherController {
   hardDelete(@Param('id', ParseIntPipe) id: number) {
     return this.teacherService.delete(+id);
   }
-
-
 
 }

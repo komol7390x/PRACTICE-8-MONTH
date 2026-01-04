@@ -1,7 +1,8 @@
 import {
   Controller, Get, Post, Body, Patch, Param, Delete, UseGuards,
   Res, Query, ParseIntPipe,
-  ParseBoolPipe
+  ParseBoolPipe,
+  ConflictException
 } from '@nestjs/common';
 import { AdminService } from './admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
@@ -188,8 +189,12 @@ export class AdminController {
 
   isActive(
     @Param('id', ParseIntPipe) id: number,
-    @Query('active') active: boolean
+    @Query('active') active: boolean,
+    @CurrentUser('user') user: IToken,
   ) {
+    if (user.id === id) {
+      throw new ConflictException('You cannot change your own active status');
+    }
     return this.adminService.updateStatus(id, active);
   }
   // --------------------- SOFT DELETE ---------------------
@@ -199,8 +204,15 @@ export class AdminController {
   @ApiOperation({ summary: 'for super admin' })
   @AccessRoles(Roles.SUPER_ADMIN)
 
-  softDelete(@Param('id', ParseIntPipe) id: number) {
-    return this.adminService.softDelete(id);
+  softDelete(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser('user') user: IToken,
+    @Query('status', ParseBoolPipe) status?: boolean,
+  ) {
+    if (user.id === id) {
+      throw new ConflictException('You cannot delete your own account');
+    }
+    return this.adminService.softDelete(id, status);
   }
   // ---------------------  DELETE ---------------------
 
@@ -209,7 +221,12 @@ export class AdminController {
   @ApiOperation({ summary: 'for super admin' })
   @AccessRoles(Roles.SUPER_ADMIN)
 
-  delete(@Param('id', ParseIntPipe) id: number) {
+  delete(@Param('id', ParseIntPipe) id: number,
+    @CurrentUser('user') user: IToken
+  ) {
+    if (user.id === id) {
+      throw new ConflictException('You cannot delete your own account');
+    }
     return this.adminService.delete(id);
   }
 

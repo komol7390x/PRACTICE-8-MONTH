@@ -18,6 +18,7 @@ import { RegisterStep2Dto } from './dto/register-step2';
 import { generateOTP } from 'src/infrastructure/otp-generator/otp-generator';
 import { CustomCacheService } from 'src/infrastructure/cashe-service/nest-cashe-service';
 import { AuthService } from '../auth/auth.service';
+import { ConfirmmTelEmailDto } from './dto/confirmm-tel-email';
 
 export interface ICheckOTP {
   id: number,
@@ -52,8 +53,27 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
     const hashedPassword = await this.crypto.encrypt(password)
     return super.create({ ...dto, password: hashedPassword });
   }
+  // ----------------------- CONFIRM PHONE AND EMAIL -----------------------
+  async confirmPhoneEmail(dto: ConfirmmTelEmailDto) {
+    const { phoneNumber, email } = dto
+    let otpData: any = {}
+    if (email) {
+      const existEmail = await this.teacherRepository.findOne({ where: { email } })
+      if (existEmail) {
+        throw new ConflictException(`${email} already exist on Teacher`)
+      }
+      otpData.emailOtp = generateOTP()
+    }
+    if (phoneNumber) {
+      const existPhoneNumber = await this.teacherRepository.findOne({ where: { phoneNumber } })
+      if (existPhoneNumber) {
+        throw new ConflictException(`${phoneNumber} already exist on Teacher`)
+      }
+      otpData.phoneOtp = generateOTP()
+    }
 
-
+    return successRes({ ...otpData, sek: 300 })
+  }
   // --------------------- REGISTER STEP-2 TEACHER ---------------------
 
   async registrationStep2(id: number, dto: RegisterStep2Dto) {
@@ -143,6 +163,7 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
     level?: LanguageLevel,
     sort: TeacherSort = TeacherSort.CREATED_AT,
     lang?: string,
+    isDeleted?: boolean,
   ) {
     const skip = (page - 1) * limit;
 
@@ -150,13 +171,17 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
       .createQueryBuilder('t')
       .leftJoinAndSelect('t.certificates', 'c')
       .leftJoinAndSelect('t.lessons', 'l')
-      .where('t.isDeleted = :isDeleted', { isDeleted: false });
 
     baseQb.select(['t', 'c', 'l']);
 
     if (typeof status == 'boolean') {
       baseQb.andWhere('t.isActive = :isActive', {
         isActive: status = Boolean(status)
+      });
+    }
+    if(isDeleted !== undefined){
+      baseQb.andWhere('t.isDeleted = :isDeleted', {
+        isDeleted: isDeleted = Boolean(isDeleted)
       });
     }
 

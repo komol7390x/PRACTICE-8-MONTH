@@ -199,7 +199,7 @@ export class AdminService
 
     const { fullname, username, password } = dto
 
-    const admin = await this.adminRepo.findOne({ where: { id } });
+    const admin = await this.adminRepo.findOne({ where: { id, role: Not(Roles.SUPER_ADMIN) } });
 
     let newPassword = admin?.password
     if (!admin) throw new HttpException('Admin not found', 404);

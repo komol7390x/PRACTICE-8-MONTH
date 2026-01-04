@@ -80,19 +80,21 @@ export class BaseService<CreateDto, UpdateDto, Entity> {
 
   async delete(id: string | number): Promise<IResponse> {
     await this.findOneById(id);
-    
+
     (await this.repository.delete(id)) as unknown as Entity;
     return successRes({});
   }
   // ---------------- SOFT DELETE ----------------
 
-  async softDelete(id: string | number): Promise<IResponse> {
+  async softDelete(id: string | number, status?: boolean): Promise<IResponse> {
     const user = await this.repository.findOne({ where: { id } });
     if (!user) {
       throw new HttpException('User not found', 404);
     }
-    user.isDeleted = true;
-    user.isActive = false
+    if (status !== undefined) {
+      user.isDeleted = status;
+      user.isActive = !status;
+    }
 
     const data = await this.repository.save(user);
     return successRes({ isDelete: data?.isDeleted });
