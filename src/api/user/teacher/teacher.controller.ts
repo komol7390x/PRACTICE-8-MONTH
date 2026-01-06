@@ -31,7 +31,8 @@ export class TeacherController {
     return this.teacherService.createTeacher(dto);
   }
 
-  // --------------------- CREATE TEACHER ---------------------
+  // --------------------- CONFRIM TEACHER ---------------------
+
   @Post('confirm-tel-email')
 
   @ApiOperation({ summary: 'Create teacher for Admin' })
@@ -43,18 +44,19 @@ export class TeacherController {
 
 
   // --------------------- REGISTER STEP-2 TEACHER ---------------------
-  @Post('register-step2/:id')
+  @Post('register-step2')
   @AccessRoles(Roles.TEACHER, 'ID')
 
   @ApiOperation({ summary: 'registration teacher step ' })
 
-  registrationStep2(@Body() dto: RegisterStep2Dto, @Param('id', ParseIntPipe) id: number) {
-    return this.teacherService.registrationStep2(id, dto);
+  registrationStep2(@Body() dto: RegisterStep2Dto,
+    @CurrentUser('user') user: IToken) {
+    return this.teacherService.registrationStep2(user.id, dto);
   }
 
   // --------------------- REGISTER STEP-3 TEACHER ---------------------
 
-  @Post('register-step3/:id')
+  @Post('register-step3')
   @AccessRoles(Roles.TEACHER, 'ID')
 
   @ApiOperation({ summary: 'registration teacher step ' })
@@ -62,8 +64,8 @@ export class TeacherController {
 
   registrationStep3(
     @Query('otp', ParseIntPipe) otp: number,
-    @Param('id', ParseIntPipe) id: number) {
-    return this.teacherService.registrationStep3(id, otp);
+    @CurrentUser('user') user: IToken) {
+    return this.teacherService.registrationStep3(user.id, otp);
   }
 
   // --------------------- SIGN IN TEACHER ---------------------
