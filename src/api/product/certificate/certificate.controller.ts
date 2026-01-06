@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, ParseBoolPipe, ParseEnumPipe } from '@nestjs/common';
 import { CertificateService } from './certificate.service';
 import { CreateCertificateDto } from './dto/create-certificate.dto';
 import { UpdateCertificateDto } from './dto/update-certificate.dto';
@@ -9,6 +9,8 @@ import { Roles } from 'src/common/enum/roles.enum';
 import { ApiOperation } from '@nestjs/swagger';
 import { CurrentUser } from 'src/common/decorator/currentUser.decorator';
 import { type IToken } from 'src/infrastructure/token/interface';
+import { LanguageLevel } from './enum/lang-level';
+import { ApiCertificateFilters } from 'src/common/decorator/certificate.decorator';
 
 @Controller('certificate')
 @UseGuards(AuthGuard, RolesGuard)
@@ -24,12 +26,26 @@ export class CertificateController {
   // ---------------------- GET ALL ----------------------
 
   @Get()
-  
+
   @ApiOperation({ summary: 'Find all for super admin' })
   @AccessRoles(Roles.TEACHER, Roles.SUPER_ADMIN, Roles.ADMIN)
-  
-  findAll() {
-    return this.certificateService.findAllCertificate();
+  @ApiCertificateFilters()
+
+  findAll(
+    @Query('active', new ParseBoolPipe({ optional: true })) active?: boolean,
+    @Query('level', new ParseEnumPipe(LanguageLevel, { optional: true })) level?: LanguageLevel,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    let pageNumber = page ? parseInt(page, 10) : 1;
+    let limitNumber = limit ? parseInt(limit, 10) : 100;
+
+    if (limitNumber < 1) limitNumber = 1;
+    if (limitNumber > 100) limitNumber = 100;
+    pageNumber = pageNumber < 1 ? 1 : pageNumber
+
+    return this.certificateService.findAllCertificate(active, level, search, pageNumber, limitNumber);
   }
   // ---------------------- GET ONE BY TEACHER ----------------------
 
@@ -41,7 +57,7 @@ export class CertificateController {
     return this.certificateService.findOneCertificate(user.id);
   }
   // ---------------------- GET ONE ----------------------
-  
+
   @Get(':id')
 
   @ApiOperation({ summary: 'Find one for super admin' })

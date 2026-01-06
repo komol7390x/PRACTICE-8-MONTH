@@ -157,6 +157,18 @@ export class AdminController {
       },
     });
   }
+  // --------------------- UPDATE ADMIN ---------------------
+
+  @Patch('update-details')
+
+  @ApiOperation({ summary: 'for super admin and admin' })
+  @AccessRoles(Roles.SUPER_ADMIN, 'ID')
+
+  updateDetailsAdmin(
+    @Body() dto: UpdateAdminDto,
+    @CurrentUser() user: IToken) {
+    return this.adminService.updateAdmin(user.id, dto, user);
+  }
   // --------------------- UPDATE DETAILES ---------------------
 
   @Patch('update-details/:id')
@@ -170,6 +182,7 @@ export class AdminController {
     @CurrentUser() user: IToken) {
     return this.adminService.updateAdmin(id, dto, user);
   }
+
   // --------------------- UPDATE PASSWORD ---------------------
 
   @Patch('update-password')

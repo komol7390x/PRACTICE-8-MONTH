@@ -3,13 +3,14 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { BaseService } from 'src/infrastructure/base/base.service';
 import { PaymentEntity } from './entities/payment.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, ILike, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StudentEntity } from 'src/api/user/student/entities/student.entity';
 import { Roles } from 'src/common/enum/roles.enum';
 import { PaymentStatus } from './enum/payment-status';
 import { CourseSetting } from '../course/enum/cours-name';
 import { CourseEntity } from '../course/entities/course.entity';
+import { successRes } from 'src/infrastructure/response/success.response';
 
 @Injectable()
 export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentDto, PaymentEntity> {
@@ -104,5 +105,91 @@ export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentD
     } finally {
       await queryRunner.release();
     }
+  }
+
+  // ------------------ FIND ALL PAYMENT ------------------
+  async findAllPayment(
+    page: number = 1,
+    limit: number = 100,
+    active?: boolean,
+    status?: PaymentStatus,
+    role?: Roles,
+    search?: string
+  ) {
+    const skip = (page - 1) * limit;
+
+    // 1. Umumiy filtrlar (har doim qo'shiladigan)
+    const baseCondition: any = { isDeleted: false };
+    if (active !== undefined) baseCondition.isActive = active;
+    if (status) baseCondition.status = status;
+    if (role) baseCondition.role = role;
+
+    // 2. "where" shartini shakllantirish
+    let where: any;
+
+    if (search) {
+      const isNumber = !isNaN(Number(search));
+      const searchNum = isNumber ? Number(search) : null;
+
+      if (isNumber) {
+        // Raqam bo'lsa OR mantiqi: lessonId YOKI studentId
+        where = [
+          { ...baseCondition, lessonId: searchNum },
+          { ...baseCondition, studentId: searchNum }
+        ];
+      } else {
+        // Matn bo'lsa: reason bo'yicha
+        where = { ...baseCondition, reason: ILike(`%${search}%`) };
+      }
+    } else {
+      // Search bo'lmasa shunchaki asosiy filtrlar
+      where = baseCondition;
+    }
+
+    // 3. Ma'lumotlarni olish
+    const [data, total] = await this.paymanetRepo.findAndCount({
+      where,
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: skip,
+    });
+
+    // 4. Statistika (Xatolik chiqmasligi uchun baseCondition dan foydalanamiz)
+    const activeCount = await this.paymanetRepo.count({
+      where: { ...baseCondition, isActive: true }
+    });
+
+    const inactiveCount = await this.paymanetRepo.count({
+      where: { ...baseCondition, isActive: false }
+    });
+
+    const deletedCount = await this.paymanetRepo.count({
+      where: { isDeleted: true }
+    });
+
+    return {
+      data,
+      meta: {
+        totalItems: total,
+        itemCount: data.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      },
+      stats: {
+        active: activeCount,
+        inactive: inactiveCount,
+        deleted: deletedCount,
+      }
+    };
+  }
+
+  // ------------------ FIND ONE PAYMENT ------------------
+  async findOnePayment(id: number) {
+    const data = await this.paymanetRepo.findOne({ where: { id } });
+    if (!data) {
+      throw new NotFoundException(`${id} id payment not found`)
+    }
+    return successRes(data)
   }
 }
