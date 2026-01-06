@@ -12,7 +12,6 @@ import { PaymentModule } from './api/product/payment/payment.module';
 import { StatisticaModule } from './api/product/statistica/statistica.module';
 import { CertificateModule } from './api/product/certificate/certificate.module';
 import { LessonTemplateModule } from './api/product/lesson-template/lesson-template.module';
-import { TeacherPaymentModule } from './api/product/teacher-payment/teacher-payment.module';
 import { NotificationModule } from './api/product/notification/notification.module';
 import { AuthModule } from './api/user/auth/auth.module';
 import { BotModule } from './api/product/bot/bot.module';
@@ -73,7 +72,6 @@ import { CourseModule } from './api/product/course/course.module';
         TeacherModule,
         PaymentModule,
         CertificateModule,
-        TeacherPaymentModule,
         NotificationModule,
         // BotModule,
         CourseModule,

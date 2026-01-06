@@ -5,11 +5,14 @@ import { Roles } from "src/common/enum/roles.enum";
 
 @Entity('payment')
 export class PaymentEntity extends BaseEntity {
-    @Column({ type: 'int' })
+    @Column({ type: 'int', nullable: true })
     lessonId: number
 
-    @Column({ type: 'int' })
+    @Column({ type: 'int', nullable: true })
     studentId: number
+
+    @Column({ type: 'int', nullable: true })
+    teacherId: number
 
     @Column({ type: 'decimal' })
     price: number

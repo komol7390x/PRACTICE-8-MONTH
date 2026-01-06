@@ -7,8 +7,10 @@ import { ApiOperation } from '@nestjs/swagger';
 import { AccessRoles } from 'src/common/decorator/roles.decorator';
 import { Roles } from 'src/common/enum/roles.enum';
 import { AuthGuard } from 'src/common/guard/AuthGuard';
+import { CurrentUser } from 'src/common/decorator/currentUser.decorator';
+import { type IToken } from 'src/infrastructure/token/interface';
 import { PaymentStatus } from './enum/payment-status';
-import { ApiFilterQueries } from 'src/common/decorator/payment-list';
+import { ApiPaymentFilters } from 'src/common/decorator/payment.decorator';
 
 @Controller('payment')
 @UseGuards(AuthGuard, RolesGuard)
@@ -24,39 +26,60 @@ export class PaymentController {
     return this.paymentService.processLessonPayment(dto);
   }
 
-  // ----------------------- PAYMENT ALL FOR ADMIN -----------------------
+  // ----------------------- PAYMENT ALL -----------------------
 
   @Get()
 
-  @ApiOperation({ summary: 'Payment for leeson for teacher' })
-  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
-  @ApiFilterQueries()
+  @ApiPaymentFilters()
+  @ApiOperation({ summary: 'registration leeson for teacher' })
+  @AccessRoles(Roles.ADMIN, Roles.SUPER_ADMIN)
 
   findAll(
-    @Query('active', new ParseBoolPipe({ optional: true })) active?: boolean,
     @Query('status', new ParseEnumPipe(PaymentStatus, { optional: true })) status?: PaymentStatus,
+    @Query('active', new ParseBoolPipe({ optional: true })) active?: boolean,
+    @Query('deleted', new ParseBoolPipe({ optional: true })) deleted?: boolean,
     @Query('role', new ParseEnumPipe(Roles, { optional: true })) role?: Roles,
     @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-
     let pageNumber = page ? parseInt(page, 10) : 1;
     let limitNumber = limit ? parseInt(limit, 10) : 100;
 
     if (limitNumber < 1) limitNumber = 1;
     if (limitNumber > 100) limitNumber = 100;
     pageNumber = pageNumber < 1 ? 1 : pageNumber
-
-    return this.paymentService.findAllPayment(
-      pageNumber,
-      limitNumber,
-      active, status, role, search);
+    return this.paymentService.findAllPayment({
+      status,
+      active,
+      deleted,
+      role,
+      search,
+      page: pageNumber,
+      limit: limitNumber
+    });
   }
 
-  // ----------------------- GET ONE PAYMENT -----------------------
+  // ----------------------- PAYMENT FOR TEACHER -----------------------
 
-  @Get(':id')
+  @Get('teacher')
+  findOne(
+    @CurrentUser('user') user: IToken,
+    @CurrentUser('role') role: Roles,
+    @Query('status', new ParseEnumPipe(PaymentStatus, { optional: true })) status?: PaymentStatus,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    let pageNumber = page ? parseInt(page, 10) : 1;
+    let limitNumber = limit ? parseInt(limit, 10) : 100;
+
+    if (limitNumber < 1) limitNumber = 1;
+    if (limitNumber > 100) limitNumber = 100;
+    pageNumber = pageNumber < 1 ? 1 : pageNumber
+    return this.paymentService.findAllForTeacher(user.id, status, search, page, limit, role);
+  }
+  // ----------------------- PAYMENT STUDENT -----------------------
 
   @ApiOperation({ summary: 'Get one paymnent for student, teacher' })
   @AccessRoles(Roles.STUDENT, Roles.TEACHER, Roles.SUPER_ADMIN, Roles.ADMIN)
