@@ -42,7 +42,7 @@ export class StudentController {
   @Get()
   @ApiPagination()
   @ApiOperation({ summary: 'for super admin and admin' })
-  @AccessRoles(Roles.SUPER_ADMIN, Roles.STUDENT)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
 
   findAll(
     @Query('page') page?: string,
@@ -66,7 +66,7 @@ export class StudentController {
 
   @Get(':id')
   @ApiOperation({ summary: 'for super admin and admin' })
-  @AccessRoles(Roles.SUPER_ADMIN, Roles.STUDENT, 'ID')
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.STUDENT, 'ID', Roles.ADMIN)
 
   findOne(
     @Param('id') id: string) {

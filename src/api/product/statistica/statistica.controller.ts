@@ -23,11 +23,21 @@ export class StatisticaController {
   // ------------------- GET TEACHER -------------------
   @Get('teacher')
 
-  @ApiOperation({ summary: 'Get admin statistics' })
-  @AccessRoles(Roles.SUPER_ADMIN,Roles.ADMIN)
+  @ApiOperation({ summary: 'Get Teacher statistics' })
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
 
   getTeacher() {
     return this.statisticaService.getTecher();
+  }
+
+  // ------------------- GET STUDENT -------------------
+  @Get('student')
+
+  @ApiOperation({ summary: 'Get Student statistics' })
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
+
+  getStudent() {
+    return this.statisticaService.getStudent();
   }
 
 }

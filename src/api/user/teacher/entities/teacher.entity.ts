@@ -1,5 +1,6 @@
 import { CertificateEntity } from "src/api/product/certificate/entities/certificate.entity";
 import { LessonTemplateEntity } from "src/api/product/lesson-template/entities/lesson-template.entity";
+import { PaymentEntity } from "src/api/product/payment/entities/payment.entity";
 import { Roles } from "src/common/enum/roles.enum";
 import { BaseEntity } from "src/core/base.entity";
 import { Column, Entity, OneToMany } from "typeorm";
@@ -53,4 +54,7 @@ export class TeacherEntity extends BaseEntity {
 
     @OneToMany(() => LessonTemplateEntity, (lesson) => lesson.teacher)
     lessons: LessonTemplateEntity[];
+
+    @OneToMany(() => PaymentEntity, (lesson) => lesson.student)
+    payments: PaymentEntity[];
 }

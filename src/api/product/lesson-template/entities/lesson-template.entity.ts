@@ -1,9 +1,10 @@
 import { BaseEntity } from "src/core/base.entity";
-import { Column, Entity, ManyToOne, JoinColumn } from "typeorm";
+import { Column, Entity, ManyToOne, JoinColumn, OneToMany } from "typeorm";
 import { WeekDays } from "../enum/week-day";
 import { TeacherEntity } from "src/api/user/teacher/entities/teacher.entity";
 import { StudentEntity } from "src/api/user/student/entities/student.entity";
 import { BookedLesson } from "../enum/booked-type";
+import { PaymentEntity } from "../../payment/entities/payment.entity";
 
 @Entity('lessonTemplate')
 export class LessonTemplateEntity extends BaseEntity {
@@ -49,4 +50,7 @@ export class LessonTemplateEntity extends BaseEntity {
         { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'studentId' })
     student: StudentEntity;
+
+    @OneToMany(() => PaymentEntity, (lesson) => lesson.student)
+    payments: PaymentEntity[];
 }

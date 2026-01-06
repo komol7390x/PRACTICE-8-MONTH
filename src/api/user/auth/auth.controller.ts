@@ -57,7 +57,7 @@ export class AuthController {
         if (step == 2) {
             await this.authService.generateTokens(item.id, res)
             return res.redirect(
-                `${appConfig.FRONT_URL}/auth/teacher/register/step2/${item.id}`,
+                `${appConfig.FRONT_URL}/teacher/google/step-2`,
             );
         }
 
@@ -65,14 +65,14 @@ export class AuthController {
         if (step === 'completed') {
             await this.authService.generateTokens(item.id, res)
             // Teacher dashboard'ga redirect
-            return res.redirect(`${appConfig.FRONT_URL}/teacher/dashboard`);
+            return res.redirect(`${appConfig.FRONT_URL}/teacher-panel/statistics`);
         }
 
         // // Agar account inactive bo'lsa
         if (step === 'inactive') {
             await this.authService.generateTokens(item.id, res)
             return res.redirect(
-                `${appConfig.FRONT_URL}/login/teacher?error=account_inactive`,
+                `${appConfig.FRONT_URL}/teacher-panel/settings`,
             );
         }
 
