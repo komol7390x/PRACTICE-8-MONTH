@@ -105,6 +105,7 @@ export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentD
       await queryRunner.release();
     }
   }
+  // ------------------ FIND ALL LESSON PAYMENT ------------------
 
   async findAllPayment(filters: {
     page?: number;
@@ -144,7 +145,8 @@ export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentD
     if (search) {
       queryBuilder.andWhere(
         new Brackets((qb) => {
-          qb.where('payment.reason ILIKE :search', { search: `%${search}%` }) // Sababi bo'yicha
+          qb.where('payment.reason ILIKE :search', { search: `%${search}%` })
+            .orWhere('CAST(payment.id AS TEXT) ILIKE :search', { search: `%${search}%` }) // ID
             .orWhere('CAST(payment.lessonId AS TEXT) ILIKE :search', { search: `%${search}%` }) // Dars ID
             .orWhere('CAST(payment.studentId AS TEXT) ILIKE :search', { search: `%${search}%` }) // Talaba ID
             .orWhere('CAST(payment.teacherId AS TEXT) ILIKE :search', { search: `%${search}%` }); // O'qituvchi ID
@@ -187,5 +189,16 @@ export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentD
         deleted: deletedCount,
       },
     };
+  }
+
+  async findAllForTeacher(
+    id: number,
+    status?: PaymentStatus,
+    search?: string,
+    page?: string,
+    limit?: string,
+    role?: Roles,
+  ) {
+
   }
 }

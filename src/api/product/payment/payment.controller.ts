@@ -59,11 +59,24 @@ export class PaymentController {
     });
   }
 
-  // ----------------------- PAYMENT STUDENT -----------------------
+  // ----------------------- PAYMENT FOR TEACHER -----------------------
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.paymentService.findOneById(+id);
+  @Get('teacher')
+  findOne(
+    @CurrentUser('user') user: IToken,
+    @CurrentUser('role') role: Roles,
+    @Query('status', new ParseEnumPipe(PaymentStatus, { optional: true })) status?: PaymentStatus,
+    @Query('search') search?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    let pageNumber = page ? parseInt(page, 10) : 1;
+    let limitNumber = limit ? parseInt(limit, 10) : 100;
+
+    if (limitNumber < 1) limitNumber = 1;
+    if (limitNumber > 100) limitNumber = 100;
+    pageNumber = pageNumber < 1 ? 1 : pageNumber
+    return this.paymentService.findAllForTeacher(user.id, status, search, page, limit, role);
   }
   // ----------------------- PAYMENT STUDENT -----------------------
 
