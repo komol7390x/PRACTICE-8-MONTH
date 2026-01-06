@@ -8,6 +8,8 @@ import { ILike, Repository } from 'typeorm';
 import { TeacherService } from 'src/api/user/teacher/teacher.service';
 import { successRes } from 'src/infrastructure/response/success.response';
 import { LanguageLevel } from './enum/lang-level';
+import { IToken } from 'src/infrastructure/token/interface';
+import { Roles } from 'src/common/enum/roles.enum';
 
 @Injectable()
 export class CertificateService extends BaseService<CreateCertificateDto, UpdateCertificateDto, CertificateEntity> {
