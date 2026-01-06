@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, ParseBoolPipe, ParseEnumPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, ParseBoolPipe, ParseEnumPipe, ParseIntPipe, DefaultValuePipe } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
@@ -10,7 +10,7 @@ import { AuthGuard } from 'src/common/guard/AuthGuard';
 import { CurrentUser } from 'src/common/decorator/currentUser.decorator';
 import { type IToken } from 'src/infrastructure/token/interface';
 import { PaymentStatus } from './enum/payment-status';
-import { ApiPaymentFilters } from 'src/common/decorator/payment.decorator';
+import { ApiPaymentFilters, ApiPaymentUserFilters } from 'src/common/decorator/payment.decorator';
 
 @Controller('payment')
 @UseGuards(AuthGuard, RolesGuard)
@@ -60,32 +60,34 @@ export class PaymentController {
     });
   }
 
-  // ----------------------- PAYMENT FOR TEACHER -----------------------
+  // ----------------------- PAYMENT FOR USER -----------------------
 
-  @Get('teacher')
-  findOne(
+  @Get('user')
+
+  @ApiPaymentUserFilters()
+  @ApiOperation({ summary: 'find payment for teacher and student' })
+  @AccessRoles(Roles.TEACHER, Roles.STUDENT)
+
+  findOneUser(
     @CurrentUser('user') user: IToken,
-    @CurrentUser('role') role: Roles,
     @Query('status', new ParseEnumPipe(PaymentStatus, { optional: true })) status?: PaymentStatus,
     @Query('search') search?: string,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(100), ParseIntPipe) limit: number = 100,
   ) {
-    let pageNumber = page ? parseInt(page, 10) : 1;
-    let limitNumber = limit ? parseInt(limit, 10) : 100;
+    const safeLimit = Math.min(Math.max(limit, 1), 100);
+    const safePage = Math.max(page, 1);
 
-    if (limitNumber < 1) limitNumber = 1;
-    if (limitNumber > 100) limitNumber = 100;
-    pageNumber = pageNumber < 1 ? 1 : pageNumber
-    return this.paymentService.findAllForTeacher(user.id, status, search, page, limit, role);
+    if ([Roles.STUDENT, Roles.TEACHER].includes(user.role as Roles)) {
+      return this.paymentService.findAllForUser(
+        user.id,
+        status,
+        search,
+        safePage,
+        safeLimit,
+        user.role
+      );
+    }
   }
-  // ----------------------- PAYMENT STUDENT -----------------------
-
-  @ApiOperation({ summary: 'Get one paymnent for student, teacher' })
-  @AccessRoles(Roles.STUDENT, Roles.TEACHER, Roles.SUPER_ADMIN, Roles.ADMIN)
-
-  findOne(@Param('id') id: number) {
-    return this.paymentService.findOnePayment(+id);
-  }
-
+  
 }

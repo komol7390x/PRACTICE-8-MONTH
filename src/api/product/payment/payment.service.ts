@@ -3,7 +3,7 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { BaseService } from 'src/infrastructure/base/base.service';
 import { PaymentEntity } from './entities/payment.entity';
-import { Brackets, DataSource, Repository } from 'typeorm';
+import { Brackets, DataSource, ILike, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StudentEntity } from 'src/api/user/student/entities/student.entity';
 import { Roles } from 'src/common/enum/roles.enum';
@@ -191,15 +191,84 @@ export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentD
       },
     };
   }
+  // ------------------ FIND ALL USER PAYMENT ------------------
 
-  async findAllForTeacher(
+  async findAllForUser(
     id: number,
     status?: PaymentStatus,
     search?: string,
-    page?: string,
-    limit?: string,
-    role?: Roles,
+    page: number = 1,
+    limit: number = 10,
+    role?: string,
   ) {
+    // 1. Asosiy shart (Kim so'rayotganiga qarab)
+    const baseWhere: any = {};
+    if (role === Roles.TEACHER) {
+      baseWhere.teacher = { id };
+    } else if (role === Roles.STUDENT) {
+      baseWhere.student = { id };
+    }
 
+    // 2. Status filtri
+    if (status) {
+      baseWhere.status = status;
+    }
+
+    // 3. Search mantiqi (Massiv ko'rinishida OR operatori bo'ladi)
+    let whereConditions: any | any[] = baseWhere;
+
+    if (search) {
+      const searchPattern = ILike(`%${search}%`);
+
+      if (role === Roles.TEACHER) {
+        // Teacher bo'lsa: Student ismi/familiyasi yoki to'lov sababidan qidiradi
+        whereConditions = [
+          { ...baseWhere, student: { firstName: searchPattern } },
+          { ...baseWhere, student: { lastName: searchPattern } },
+          { ...baseWhere, reason: searchPattern },
+        ];
+      } else {
+        // Student bo'lsa: Teacher ismi/familiyasi yoki to'lov sababidan qidiradi
+        whereConditions = [
+          { ...baseWhere, teacher: { fullname: searchPattern } },
+          { ...baseWhere, reason: searchPattern },
+        ];
+      }
+    }
+
+    // 4. Ma'lumotlarni olish va hisoblash
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await this.paymanetRepo.findAndCount({
+      where: whereConditions,
+      relations: {
+        student: true,
+        teacher: true,
+        lesson: true
+      },
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: skip,
+    });
+
+    const stats = {
+      pending: await this.paymanetRepo.count({ where: { ...baseWhere, status: PaymentStatus.PENDING } }),
+      pendingCanceled: await this.paymanetRepo.count({ where: { ...baseWhere, status: PaymentStatus.PENDING_CANCELED } }),
+      paid: await this.paymanetRepo.count({ where: { ...baseWhere, status: PaymentStatus.PAID } }),
+      paidCanceled: await this.paymanetRepo.count({ where: { ...baseWhere, status: PaymentStatus.PAID_CANCELED } }),
+    };
+
+    // 6. Natija qaytarish
+    return {
+      data,
+      meta: {
+        totalItems: total,
+        itemCount: data.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      },
+      stats
+    };
   }
 }

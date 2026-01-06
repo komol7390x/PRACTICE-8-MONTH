@@ -275,6 +275,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
       },
     };
   }
+  
   // ------------------ UPDATE LESSON ------------------
 
   async updateLessonByTeacher(lessonId: number, teacherId: number, dto: UpdateLessonTemplateDto) {
