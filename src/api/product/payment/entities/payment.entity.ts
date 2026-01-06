@@ -36,17 +36,17 @@ export class PaymentEntity extends BaseEntity {
     reason: string
 
     @ManyToOne(() => StudentEntity, (student) => student.payments,
-        { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+        { onDelete: 'CASCADE', onUpdate: 'CASCADE', nullable: true })
     @JoinColumn({ name: 'studentId' })
     student: StudentEntity
 
     @ManyToOne(() => TeacherEntity, (student) => student.payments,
-        { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+        { onDelete: 'CASCADE', onUpdate: 'CASCADE', nullable: true })
     @JoinColumn({ name: 'teacherId' })
     teacher: TeacherEntity
 
     @ManyToOne(() => LessonTemplateEntity, (student) => student.payments,
-        { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
+        { onDelete: 'CASCADE', onUpdate: 'CASCADE', nullable: true })
     @JoinColumn({ name: 'lessonId' })
     lesson: LessonTemplateEntity
 }
