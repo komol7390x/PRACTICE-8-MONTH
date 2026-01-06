@@ -3,7 +3,7 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { BaseService } from 'src/infrastructure/base/base.service';
 import { PaymentEntity } from './entities/payment.entity';
-import { DataSource, Repository } from 'typeorm';
+import { Brackets, DataSource, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StudentEntity } from 'src/api/user/student/entities/student.entity';
 import { Roles } from 'src/common/enum/roles.enum';
@@ -104,5 +104,88 @@ export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentD
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async findAllPayment(filters: {
+    page?: number;
+    limit?: number;
+    status?: PaymentStatus;
+    role?: Roles;
+    search?: string;
+    active?: boolean;
+    deleted?: boolean;
+  }) {
+    const {
+      page = 1,
+      limit = 100,
+      status,
+      role,
+      search,
+      active,
+      deleted = false,
+    } = filters;
+
+    const queryBuilder = this.paymanetRepo.createQueryBuilder('payment');
+
+    // 1. Oddiy filtrlar
+    queryBuilder.where('payment.isDeleted = :deleted', { deleted });
+
+    if (status) {
+      queryBuilder.andWhere('payment.status = :status', { status });
+    }
+    if (role) {
+      queryBuilder.andWhere('payment.role = :role', { role });
+    }
+    if (active !== undefined) {
+      queryBuilder.andWhere('payment.isActive = :active', { active });
+    }
+
+    // 2. Maxsus Qidiruv (lessonId, studentId, teacherId, reason)
+    if (search) {
+      queryBuilder.andWhere(
+        new Brackets((qb) => {
+          qb.where('payment.reason ILIKE :search', { search: `%${search}%` }) // Sababi bo'yicha
+            .orWhere('CAST(payment.lessonId AS TEXT) ILIKE :search', { search: `%${search}%` }) // Dars ID
+            .orWhere('CAST(payment.studentId AS TEXT) ILIKE :search', { search: `%${search}%` }) // Talaba ID
+            .orWhere('CAST(payment.teacherId AS TEXT) ILIKE :search', { search: `%${search}%` }); // O'qituvchi ID
+        }),
+      );
+    }
+
+    // 3. Pagination va Ma'lumotlarni yuklash
+    const skip = (page - 1) * limit;
+
+    const [data, total] = await queryBuilder
+      .orderBy('payment.createdAt', 'DESC')
+      .take(limit)
+      .skip(skip)
+      .getManyAndCount();
+
+    // 4. Statistika (Siz so'ragandek)
+    const activeCount = await this.paymanetRepo.count({
+      where: { isActive: true, isDeleted: false },
+    });
+    const inactiveCount = await this.paymanetRepo.count({
+      where: { isActive: false, isDeleted: false },
+    });
+    const deletedCount = await this.paymanetRepo.count({
+      where: { isDeleted: true },
+    });
+
+    return {
+      data,
+      meta: {
+        totalItems: total,
+        itemCount: data.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      },
+      stats: {
+        active: activeCount,
+        inactive: inactiveCount,
+        deleted: deletedCount,
+      },
+    };
   }
 }
