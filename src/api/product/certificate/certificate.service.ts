@@ -7,6 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TeacherService } from 'src/api/user/teacher/teacher.service';
 import { successRes } from 'src/infrastructure/response/success.response';
+import { IToken } from 'src/infrastructure/token/interface';
+import { Roles } from 'src/common/enum/roles.enum';
 
 @Injectable()
 export class CertificateService extends BaseService<CreateCertificateDto, UpdateCertificateDto, CertificateEntity> {
@@ -15,7 +17,7 @@ export class CertificateService extends BaseService<CreateCertificateDto, Update
     private readonly teacherService: TeacherService
   ) { super(certificatyRepo) }
   // ------------------- CREATE CERTIFICATE -------------------
-  async createCertificate(dto: CreateCertificateDto) {
+  async createCertificate(dto: CreateCertificateDto, user: IToken) {
     const { teacherId, hourPrice, level, specificationName, description } = dto
     await this.teacherService.findOneTeacher(teacherId)
     const data = await this.certificatyRepo.save(
@@ -25,6 +27,7 @@ export class CertificateService extends BaseService<CreateCertificateDto, Update
         level,
         teacherId,
         specificationName,
+        isActive: user.role !== Roles.TEACHER ? true : false
       })
     )
     return successRes({ ...data })

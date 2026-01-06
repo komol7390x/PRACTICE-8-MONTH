@@ -18,16 +18,19 @@ export class CertificateController {
   @Post()
 
   @AccessRoles(Roles.TEACHER, Roles.SUPER_ADMIN, Roles.ADMIN)
-  create(@Body() dto: CreateCertificateDto) {
-    return this.certificateService.createCertificate(dto);
+  create(
+    @Body() dto: CreateCertificateDto,
+    @CurrentUser('user') user: IToken
+  ) {
+    return this.certificateService.createCertificate(dto, user);
   }
   // ---------------------- GET ALL ----------------------
 
   @Get()
-  
+
   @ApiOperation({ summary: 'Find all for super admin' })
   @AccessRoles(Roles.TEACHER, Roles.SUPER_ADMIN, Roles.ADMIN)
-  
+
   findAll() {
     return this.certificateService.findAllCertificate();
   }
@@ -41,7 +44,7 @@ export class CertificateController {
     return this.certificateService.findOneCertificate(user.id);
   }
   // ---------------------- GET ONE ----------------------
-  
+
   @Get(':id')
 
   @ApiOperation({ summary: 'Find one for super admin' })
@@ -57,7 +60,7 @@ export class CertificateController {
   @Patch(':id')
 
   @ApiOperation({ summary: 'update for super admin' })
-  @AccessRoles(Roles.TEACHER, Roles.SUPER_ADMIN, Roles.ADMIN, 'ID')
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
 
   update(@Param('id') id: string, @Body() dto: UpdateCertificateDto) {
     return this.certificateService.updateCertificate(+id, dto);
