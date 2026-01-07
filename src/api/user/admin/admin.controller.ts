@@ -193,7 +193,7 @@ export class AdminController {
   updatePassword(@Body() dto: UpdatePasswordDto, @CurrentUser() user: IToken) {
     return this.adminService.updatePassword(user.id, dto);
   }
-  // ---------------------  IS ACTIVE ---------------------
+  // --------------------- IS ACTIVE ---------------------
 
   @Patch('is-active/:id')
 

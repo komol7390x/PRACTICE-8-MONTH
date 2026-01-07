@@ -4,7 +4,7 @@ import { UpdateScheduleDto } from './dto/update-schedule.dto';
 import { BaseService } from 'src/infrastructure/base/base.service';
 import { ScheduleEntity } from './entities/schedule.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThan, MoreThan, Repository } from 'typeorm';
+import { ILike, LessThan, MoreThan, Not, Repository } from 'typeorm';
 import { TeacherEntity } from 'src/api/user/teacher/entities/teacher.entity';
 import { WeekDays } from '../lesson-template/enum/week-day';
 
@@ -45,7 +45,7 @@ export class ScheduleService extends BaseService<CreateScheduleDto, UpdateSchedu
       where: {
         teacherId: teacherId,
         startTime: LessThan(end),
-        endTime: MoreThan(start), 
+        endTime: MoreThan(start),
       },
     });
 
@@ -77,30 +77,145 @@ export class ScheduleService extends BaseService<CreateScheduleDto, UpdateSchedu
       weekDays: currentWeekDay,
       teacherId
     });
-    console.log(newSchedule);
-
 
     return await this.scheduleRepo.save(newSchedule);
 
   }
   // ------------------------- FIND ALL SCHEDULE -------------------------
 
-  async findAllSchedule() {
-    return `This action returns all schedule`;
+  async findAllSchedule(
+    teacherId?: number,
+    active?: boolean,
+    search?: string,
+    page: number = 1,
+    limit: number = 100,
+    day?: WeekDays,
+  ) {
+    let where: any = { isDeleted: false };
+
+    // 3. Dinamik filtrlar
+    if (teacherId) where.teacherId = teacherId;
+    if (active !== undefined) where.isActive = active;
+    if (day) where.weekDays = day;
+
+    // 4. Search mantiqi (ID yoki lessonName bo'yicha)
+    if (search) {
+      const isNumber = !isNaN(Number(search)) && /^\d+$/.test(search);
+      if (isNumber) {
+        where.id = Number(search);
+      } else {
+        where.lessonName = ILike(`%${search}%`);
+      }
+    }
+
+    const skip = (page - 1) * limit;
+
+    // 6. Ma'lumotlarni bazadan olish
+    const [data, total] = await this.scheduleRepo.findAndCount({
+      where,
+      relations: {
+        teacher: true,
+      },
+      order: { createdAt: 'DESC' },
+      take: limit,
+      skip: skip,
+    });
+
+    // 7. Statistika (Stats) hisoblash
+    const activeCount = await this.scheduleRepo.count({
+      where: { ...where, isActive: true },
+    });
+
+    const inactiveCount = await this.scheduleRepo.count({
+      where: { ...where, isActive: false },
+    });
+
+    // 8. Natijani qaytarish
+    return {
+      data,
+      meta: {
+        totalItems: total,
+        itemCount: data.length,
+        itemsPerPage: limit,
+        totalPages: Math.ceil(total / limit),
+        currentPage: page,
+      },
+      stats: {
+        active: activeCount,
+        inactive: inactiveCount,
+      },
+    };
   }
   // ------------------------- FIND ONE SCHEDULE -------------------------
 
   async findOneSchedule(id: number) {
-    return `This action returns a #${id} schedule`;
+    const schedule = await this.scheduleRepo.findOne({
+      where: { id },
+      relations: { teacher: true }
+    });
+    if (!schedule) throw new BadRequestException('Schedule not found');
+    return schedule;
   }
   // ------------------------- UPDATE SCHEDULE -------------------------
-
   async updateSchedule(id: number, dto: UpdateScheduleDto) {
-    return `This action updates a #${id} schedule`;
-  }
-  // ------------------------- DELETE SCHEDULE -------------------------
+    const { startTime, finishTime } = dto;
 
-  async removeSchedule(id: number) {
-    return `This action removes a #${id} schedule`;
+    // 1. Jadval mavjudligini tekshirish
+    const schedule = await this.scheduleRepo.findOne({ where: { id } });
+    if (!schedule) throw new NotFoundException('Schedule not found');
+
+    // 2. Yangi vaqtlarni aniqlash (agar dto'da kelmasa, eskisini qoldirish)
+    const start = startTime ? new Date(startTime) : schedule.startTime;
+    const end = finishTime ? new Date(finishTime) : schedule.endTime;
+    const now = new Date();
+
+    // 3. Agar vaqt o'zgargan bo'lsa, o'tmishni tekshirish
+    if (startTime && start < now) {
+      const formattedNow = now.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+      throw new BadRequestException(`Dars vaqti xato: O'tmishga o'zgartira olmaysiz. Hozir: ${formattedNow}`);
+    }
+
+    // 4. Start va End mantiqsizligini tekshirish
+    if (start >= end) {
+      throw new BadRequestException("Dars tugash vaqti boshlanish vaqtidan keyin bo'lishi shart.");
+    }
+
+    // 5. Overlap (ustma-ust tushish) tekshiruvi
+    // Faqat vaqt yoki teacher o'zgargandagina bazani tekshirish resursni tejaydi
+    const finalTeacherId =  schedule.teacherId;
+
+    const overlappingSchedule = await this.scheduleRepo.findOne({
+      where: {
+        id: Not(id), // O'zini tekshiruvdan chiqarib tashlaymiz
+        teacherId: finalTeacherId,
+        startTime: LessThan(end),
+        endTime: MoreThan(start),
+        isDeleted: false,
+      },
+    });
+
+    if (overlappingSchedule) {
+      const oStart = overlappingSchedule.startTime.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+      const oEnd = overlappingSchedule.endTime.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
+      throw new BadRequestException(
+        `O'zgartirib bo'lmaydi! Bu o'qituvchining soat ${oStart} - ${oEnd} oralig'ida boshqa darsi bor.`
+      );
+    }
+
+    // 6. Haftaning qaysi kuni ekanligini qayta hisoblash (agar vaqt o'zgargan bo'lsa)
+    const daysMap = [
+      WeekDays.SUNDAY, WeekDays.MONDAY, WeekDays.TUESDAY,
+      WeekDays.WEDNESDAY, WeekDays.THURSDAY, WeekDays.FRIDAY, WeekDays.SATURDAY
+    ];
+    const currentWeekDay = daysMap[start.getDay()];
+
+    // 7. Ma'lumotlarni yangilash
+    Object.assign(schedule, {
+      startTime: start,
+      endTime: end,
+      weekDays: currentWeekDay,
+    });
+
+    return await this.scheduleRepo.save(schedule);
   }
 }

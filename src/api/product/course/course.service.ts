@@ -10,6 +10,7 @@ import { Roles } from 'src/common/enum/roles.enum';
 @Injectable()
 export class CourseService extends BaseService<CreateCourseDto, UpdateCourseDto, CourseEntity> implements OnModuleInit {
   constructor(@InjectRepository(CourseEntity) private readonly courseRepo: Repository<CourseEntity>) { super(courseRepo) }
+
   async onModuleInit() {
     const roles = await this.courseRepo.findOne({
       where: { role: Roles.SUPER_ADMIN },

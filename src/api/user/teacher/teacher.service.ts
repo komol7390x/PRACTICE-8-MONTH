@@ -179,7 +179,7 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
         isActive: status = Boolean(status)
       });
     }
-    if(isDeleted !== undefined){
+    if (isDeleted !== undefined) {
       baseQb.andWhere('t.isDeleted = :isDeleted', {
         isDeleted: isDeleted = Boolean(isDeleted)
       });
@@ -267,8 +267,6 @@ export class TeacherService extends BaseService<CreateTeacherDto, UpdateTeacherD
   // ----------------------- UPDATE TEACHER -----------------------
 
   async updateTeacher(id: number, dto: UpdateTeacherDto, user: IToken) {
-    console.log(111);
-
     const teacher = await this.teacherRepository.findOne({ where: { id } });
     if (!teacher) {
       throw new NotFoundException(`${id} not found on Teacher`);

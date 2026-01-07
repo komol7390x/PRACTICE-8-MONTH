@@ -142,6 +142,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
 
     return await this.lessonTempRepo.save(newLesson);
   }
+
   // ------------------------BOOKED LESSON BY STUDENT------------------------
 
   async bookLessonByStudent(studentId: number, lessonId: number) {
@@ -187,6 +188,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
       meetLink: lesson.meetLink
     };
   }
+  
   // ------------------GET ALL LESSON BOOK ------------------
 
   async findAllBookLesson(filters: {
