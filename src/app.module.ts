@@ -19,6 +19,7 @@ import { TelegrafModule } from 'nestjs-telegraf';
 import { session } from 'telegraf';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CourseModule } from './api/product/course/course.module';
+import { ScheduleTeacherModule } from './api/product/schedule/schedule.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -65,6 +66,7 @@ import { CourseModule } from './api/product/course/course.module';
         //     launchOptions: {},
         //     middlewares: [session()]
         // }),
+        ScheduleTeacherModule,
         LessonTemplateModule,
         AuthModule,
         AdminModule,
