@@ -8,7 +8,7 @@ import { PaymentEntity } from "../../payment/entities/payment.entity";
 
 @Entity('lessonTemplate')
 export class LessonTemplateEntity extends BaseEntity {
-    @Column({ name: 'teacherId', type: 'int' }) // bazadagi nomi
+    @Column({ name: 'teacherId', type: 'int' })
     teacherId: number;
 
     @Column({ name: 'studentId', type: 'int', nullable: true })
@@ -20,7 +20,7 @@ export class LessonTemplateEntity extends BaseEntity {
     @Column({ type: 'varchar', nullable: true })
     meetLink: string;
 
-    @Column({ type: 'varchar', default: BookedLesson.AVAILABLE, nullable: true })
+    @Column({ type: 'varchar', default: BookedLesson.PENDING, nullable: true })
     status: string;
 
     @Column({ type: 'enum', enum: WeekDays, nullable: true })

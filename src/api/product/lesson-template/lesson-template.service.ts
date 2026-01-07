@@ -34,6 +34,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
     private readonly dataSource: DataSource,
     private readonly paymentService: PaymentService,
     private readonly authService: AuthService
+
   ) { super(lessonTempRepo) }
 
   // --------------------------- CREATE TEACHER LESSON ---------------------------
@@ -135,7 +136,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
       weekDays: weekDay,
       startTime: startDate,
       endTime: endDate,
-      status: BookedLesson.AVAILABLE,
+      status: BookedLesson.PENDING,
       price: lessonPrice
     });
 
@@ -146,7 +147,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
   async bookLessonByStudent(studentId: number, lessonId: number) {
 
     const lesson = await this.lessonTempRepo.findOne({
-      where: { id: lessonId, isActive: true, isDeleted: false, status: BookedLesson.AVAILABLE },
+      where: { id: lessonId, isActive: true, isDeleted: false, status: BookedLesson.PENDING },
       relations: { teacher: true }
     });
     if (!lesson) throw new NotFoundException("Lesson not found");
@@ -275,7 +276,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
       },
     };
   }
-  
+
   // ------------------ UPDATE LESSON ------------------
 
   async updateLessonByTeacher(lessonId: number, teacherId: number, dto: UpdateLessonTemplateDto) {
@@ -429,7 +430,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
 
       // 1. Muddati o'tgan va sotilmagan darslarni EXPIRED qilish
       await queryRunner.manager.update(LessonTemplateEntity,
-        { startTime: LessThan(now), status: BookedLesson.AVAILABLE },
+        { startTime: LessThan(now), status: BookedLesson.PENDING },
         { status: BookedLesson.EXPIRED, isActive: false }
       );
 

@@ -2,12 +2,12 @@ import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator"
 
 export class CreateScheduleDto {
-    @ApiProperty({ type: 'number', example: 175554484 })
+    @ApiProperty({ type: 'number', example: 1768478441000 })
     @IsNumber()
     @IsNotEmpty()
     startTime: number
 
-    @ApiProperty({ type: 'number', example: 175554484 })
+    @ApiProperty({ type: 'number', example: 1768500041000 })
     @IsNumber()
     @IsNotEmpty()
     finishTime: number
