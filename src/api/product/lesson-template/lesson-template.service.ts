@@ -16,6 +16,7 @@ import { Roles } from 'src/common/enum/roles.enum';
 import { AuthService } from 'src/api/user/auth/auth.service';
 import { CourseEntity } from '../course/entities/course.entity';
 import { CourseSetting } from '../course/enum/cours-name';
+import { ScheduleEntity } from '../schedule/entities/schedule.entity';
 
 @Injectable()
 export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, UpdateLessonTemplateDto, LessonTemplateEntity> {
@@ -25,170 +26,96 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
     @InjectRepository(LessonTemplateEntity)
     private readonly lessonTempRepo: Repository<LessonTemplateEntity>,
 
-    @InjectRepository(TeacherEntity)
-    private readonly teacherRepo: Repository<TeacherEntity>,
-
     @InjectRepository(StudentEntity)
     private readonly studentRepo: Repository<StudentEntity>,
 
+    @InjectRepository(ScheduleEntity)
+    private readonly scheduleRepo: Repository<ScheduleEntity>,
+
+    @InjectRepository(CourseEntity)
+    private readonly courseRepo: Repository<CourseEntity>,
+
+
     private readonly dataSource: DataSource,
     private readonly paymentService: PaymentService,
-    private readonly authService: AuthService
 
   ) { super(lessonTempRepo) }
 
-  // --------------------------- CREATE TEACHER LESSON ---------------------------
-
-  async createLessonByTeacher(teacherId: number, dto: CreateLessonTemplateDto) {
-    const { lessonName, finishTime, lessonPrice, startTime } = dto
-    const teacher = await this.teacherRepo.findOne({ where: { id: teacherId } });
-    if (!teacher || !teacher.googleRefreshToken) {
-      throw new NotFoundException(`O'qituvchi yoki Google Token topilmadi`);
-    }
-
-    // 2. Vaqtlarni Date formatiga o'tkazish
-    const startDate = new Date(Number(startTime) * (startTime < 10000000000 ? 1000 : 1));
-    const endDate = new Date(Number(finishTime) * (finishTime < 10000000000 ? 1000 : 1));
-    const now = new Date(); // Hozirgi vaqt
-
-    // --- 1-TEKSHIRUV: O'TMISHGA DARS QO'SHISHNI TAQIQLASH ---
-    if (startDate <= now) {
-      throw new BadRequestException(`O'tib ketgan vaqtga dars qo'shib bo'lmaydi! Hozirgi vaqt: ${now.toLocaleString()}`);
-    }
-
-    if (endDate <= startDate) {
-      throw new BadRequestException(`Tugash vaqti boshlanish vaqtidan keyin bo'lishi kerak!`);
-    }
-
-    // --- 2-TEKSHIRUV: DATABASE (DB) TEKSHIRUVI ---
-    const existingInDb = await this.lessonTempRepo.findOne({
-      where: {
-        teacherId: teacher.id,
-        startTime: LessThan(endDate),
-        endTime: MoreThan(startDate),
-      },
-    });
-
-    if (existingInDb) {
-      throw new BadRequestException(`Bazada bu vaqtda dars mavjud!`);
-    }
-    await this.authService.refreshGoogleToken(teacher.id)
-    // 3. Google Calendar API sozlash
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET
-    );
-    oauth2Client.setCredentials({ refresh_token: teacher.googleRefreshToken });
-    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
-
-    // --- 3-TEKSHIRUV: GOOGLE CALENDAR TEKSHIRUVI ---
-    const googleEvents = await calendar.events.list({
-      calendarId: 'primary',
-      timeMin: startDate.toISOString(),
-      timeMax: endDate.toISOString(),
-      singleEvents: true,
-    });
-
-    if (googleEvents.data.items && googleEvents.data.items.length > 0) {
-      const firstEvent = googleEvents.data.items[0];
-      throw new BadRequestException(`Google Calendar'da bu vaqt band: ${firstEvent.summary || 'Band'}`);
-    }
-
-    // 4. HAMMASI TO'G'RI BO'LSA - TADBIR YARATISH
-    const event = await calendar.events.insert({
-      calendarId: 'primary',
-      conferenceDataVersion: 1,
-      requestBody: {
-        summary: `Dars: ${lessonName}`,
-        start: { dateTime: startDate.toISOString() },
-        end: { dateTime: endDate.toISOString() },
-        conferenceData: {
-          createRequest: {
-            requestId: `lesson-${Date.now()}`,
-            conferenceSolutionKey: { type: 'hangoutsMeet' },
-          },
-        },
-      },
-    });
-
-    const meetLink = event.data.hangoutLink;
-    if (!meetLink) {
-      throw new InternalServerErrorException("Google Meet havolasini yaratishda muammo bo'ldi.");
-    }
-    const getDays = new Date(startDate).getDay()
-    const weekDayMap = [
-      WeekDays.SUNDAY,    // 0
-      WeekDays.MONDAY,    // 1
-      WeekDays.TUESDAY,   // 2
-      WeekDays.WEDNESDAY, // 3
-      WeekDays.THURSDAY,  // 4
-      WeekDays.FRIDAY,    // 5
-      WeekDays.SATURDAY,  // 6
-    ];
-    const weekDay = weekDayMap[getDays]
-
-    // 5. BAZAGA SAQLASH
-    const newLesson = this.lessonTempRepo.create({
-      lessonName: lessonName,
-      teacherId: teacher.id,
-      googleEventId: String(event.data.id),
-      meetLink: meetLink,
-      weekDays: weekDay,
-      startTime: startDate,
-      endTime: endDate,
-      status: BookedLesson.PENDING,
-      price: lessonPrice
-    });
-
-    return await this.lessonTempRepo.save(newLesson);
-  }
-
   // ------------------------BOOKED LESSON BY STUDENT------------------------
 
-  async bookLessonByStudent(studentId: number, lessonId: number) {
+  async bookScheduleByStudent(studentId: number, scheduleId: number, dto: CreateLessonTemplateDto) {
+    const { startTime, finishTime } = dto;
 
-    const lesson = await this.lessonTempRepo.findOne({
-      where: { id: lessonId, isActive: true, isDeleted: false, status: BookedLesson.PENDING },
-      relations: { teacher: true }
-    });
-    if (!lesson) throw new NotFoundException("Lesson not found");
+    // 1. Student va Schedule topish (relations bilan)
+    const [student, schedule] = await Promise.all([
+      this.studentRepo.findOne({ where: { id: studentId } }),
+      this.scheduleRepo.findOne({ where: { id: scheduleId }, relations: { teacher: true } })
+    ]);
 
-    const price = lesson.price
+    if (!student) throw new NotFoundException("Talaba topilmadi.");
+    if (!schedule) throw new NotFoundException("Dars jadvali topilmadi.");
 
-    const student = await this.studentRepo.findOne({ where: { id: studentId } });
-    if (!student) throw new NotFoundException("Student not found");
+    // 2. Vaqtlarni aniqlash
+    const startMs = Number(startTime) * (startTime < 10000000000 ? 1000 : 1);
+    const endMs = Number(finishTime) * (finishTime < 10000000000 ? 1000 : 1);
+    const selectedStart = new Date(startMs);
+    const selectedEnd = new Date(endMs);
 
-    const payment = await this.paymentService.processLessonPayment({ price, lessonId, studentId, role: Roles.STUDENT })
-    if (!payment) {
-      throw new ConflictException(`${studentId} not paid`)
+    // --- MUHIM TUZATISH: SANA VA VAQTNI TO'LIQ TEKSHIRISH ---
+    if (selectedStart < schedule.startTime || selectedEnd > schedule.endTime) {
+      throw new BadRequestException("Tanlangan vaqt o'qituvchi jadvalidan tashqarida.");
     }
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET);
 
-    oauth2Client.setCredentials({ refresh_token: lesson.teacher.googleRefreshToken });
-    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+    // Tanlangan vaqt dars vaqti bilan bir xil kunda ekanligini tekshirish (Optional lekin tavsiya etiladi)
+    if (selectedStart.toDateString() !== schedule.startTime.toDateString()) {
+      throw new BadRequestException("Tanlangan sana o'qituvchi belgilagan sanaga mos emas.");
+    }
 
-    await calendar.events.patch({
-      calendarId: 'primary',
-      eventId: lesson.googleEventId,
-      sendUpdates: 'all',
-      requestBody: {
-        attendees: [{ email: `${student.phoneNumber}@example.com` }],
+    // 3. Overlap check
+    const overlapping = await this.lessonTempRepo.findOne({
+      where: {
+        teacherId: schedule.teacherId,
+        status: BookedLesson.BOOKED,
+        startTime: LessThan(selectedEnd),
+        endTime: MoreThan(selectedStart),
+        isDeleted: false
       },
     });
+    if (overlapping) throw new BadRequestException("Bu vaqt allaqachon band qilingan.");
 
-    lesson.studentId = student.id;
-    lesson.status = BookedLesson.BOOKED
+    // 4. Narxni soatbay hisoblash
+    const durationInHours = (endMs - startMs) / (1000 * 60 * 60);
+    if (durationInHours <= 0) throw new BadRequestException("Vaqt oralig'i noto'g'ri.");
+    const totalPrice = Math.round(Number(schedule.price) * durationInHours);
 
-    await this.lessonTempRepo.save(lesson);
+    // 5. To'lov (Tranzaksiya ichida bo'lishi tavsiya etiladi)
+    const payment = await this.paymentService.processLessonPayment({
+      price: totalPrice,
+      lessonId: schedule.id,
+      studentId,
+      role: Roles.STUDENT
+    });
+    if (!payment) throw new ConflictException("To'lov amalga oshmadi.");
 
-    return {
-      message: "Dars muvaffaqiyatli band qilindi",
-      meetLink: lesson.meetLink
-    };
+    // 6. Saqlash
+    const bookedLesson = this.lessonTempRepo.create({
+      teacherId: schedule.teacherId,
+      studentId: studentId,
+      lessonName: schedule.lessonName,
+      price: totalPrice,
+      startTime: selectedStart,
+      endTime: selectedEnd,
+      googleEventId: schedule.googleEventId,
+      meetLink: schedule.meetLink,
+      status: BookedLesson.BOOKED,
+      weekDays: schedule.weekDays
+    });
+
+    return await this.lessonTempRepo.save(bookedLesson);
   }
-  
+
+ 
+
   // ------------------GET ALL LESSON BOOK ------------------
 
   async findAllBookLesson(filters: {
@@ -281,10 +208,16 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
 
   // ------------------ UPDATE LESSON ------------------
 
-  async updateLessonByTeacher(lessonId: number, teacherId: number, dto: UpdateLessonTemplateDto) {
-    // 1. Darsni va o'qituvchini tekshirish
+  async updateBookedLessonByStudent(lessonId: number, studentId: number, dto: UpdateLessonTemplateDto) {
+    const { startTime, finishTime } = dto;
+
+    if (!startTime || !finishTime) {
+      throw new BadRequestException("Boshlanish va tugash vaqti yuborilishi shart!");
+    }
+
+    // 1. Darsni topish va unga tegishli ekanligini tekshirish
     const lesson = await this.lessonTempRepo.findOne({
-      where: { id: lessonId, teacherId, isDeleted: false },
+      where: { id: lessonId, studentId, isDeleted: false },
       relations: { teacher: true }
     });
 
@@ -292,135 +225,74 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
       throw new NotFoundException("Dars topilmadi yoki sizga tegishli emas");
     }
 
-    if (lesson.status === BookedLesson.BOOKED) {
-      throw new BadRequestException("Band qilingan darsni o'zgartirib bo'lmaydi");
+    // 2. MUHIM: Faqat ertangi va undan keyingi kunlar uchun update ruxsat berish
+    const now = new Date();
+    const tomorrow = new Date();
+    tomorrow.setDate(now.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0); // Ertaga 00:00:00
+
+    // Hozirgi dars vaqti bugun bo'lsa o'zgartirib bo'lmaydi
+    if (lesson.startTime < tomorrow) {
+      throw new BadRequestException("Bugungi darslarni o'zgartira olmaysiz. Faqat kelajakdagi darslar uchun.");
     }
 
-    // 2. Vaqtlarni yangilash (agar DTO da kelgan bo'lsa)
-    let startDate = lesson.startTime;
-    let endDate = lesson.endTime;
-    let timeChanged = false;
+    // 3. Yangi vaqtlarni formatlash
+    const startMs = Number(startTime) * (startTime < 10000000000 ? 1000 : 1);
+    const endMs = Number(finishTime) * (finishTime < 10000000000 ? 1000 : 1);
+    const newStartDate = new Date(startMs);
+    const newEndDate = new Date(endMs);
 
-    if (dto.startTime || dto.finishTime) {
-      timeChanged = true;
-      startDate = dto.startTime
-        ? new Date(Number(dto.startTime) * (dto.startTime < 10000000000 ? 1000 : 1))
-        : lesson.startTime;
-      endDate = dto.finishTime
-        ? new Date(Number(dto.finishTime) * (dto.finishTime < 10000000000 ? 1000 : 1))
-        : lesson.endTime;
-
-      // Vaqt mantiqi tekshiruvi
-      const now = new Date();
-      if (startDate <= now) throw new BadRequestException("O'tmishga darsni ko'chirib bo'lmaydi");
-      if (endDate <= startDate) throw new BadRequestException("Tugash vaqti noto'g'ri");
-
-      // DB To'qnashuvni tekshirish (o'zini hisobga olmagan holda)
-      const existingInDb = await this.lessonTempRepo.findOne({
-        where: {
-          id: Not(lesson.id), // O'zini tekshirmaydi
-          teacherId: teacherId,
-          startTime: LessThan(endDate),
-          endTime: MoreThan(startDate),
-        },
-      });
-      if (existingInDb) throw new BadRequestException("Bu vaqtda boshqa darsingiz bor");
+    if (newStartDate < tomorrow) {
+      throw new BadRequestException("Yangi vaqt kamida ertangi kundan boshlanishi kerak.");
     }
 
-    // 3. Google Calendar yangilash
-    const oauth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET
-    );
-    oauth2Client.setCredentials({ refresh_token: lesson.teacher.googleRefreshToken });
-    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
-
-    try {
-      await calendar.events.patch({
-        calendarId: 'primary',
-        eventId: lesson.googleEventId,
-        requestBody: {
-          summary: dto.lessonName ? `Dars: ${dto.lessonName}` : undefined,
-          start: timeChanged ? { dateTime: startDate.toISOString() } : undefined,
-          end: timeChanged ? { dateTime: endDate.toISOString() } : undefined,
-        },
-      });
-    } catch (error) {
-      throw new InternalServerErrorException("Google Calendar'da yangilashda xato: " + error.message);
+    if (newEndDate <= newStartDate) {
+      throw new BadRequestException("Tugash vaqti boshlanish vaqtidan keyin bo'lishi shart.");
     }
 
-    // 4. Hafta kunini qayta hisoblash (agar vaqt o'zgargan bo'lsa)
-    if (timeChanged) {
-      const weekDayMap = [
-        WeekDays.SUNDAY, WeekDays.MONDAY, WeekDays.TUESDAY,
-        WeekDays.WEDNESDAY, WeekDays.THURSDAY, WeekDays.FRIDAY, WeekDays.SATURDAY
-      ];
-      lesson.weekDays = weekDayMap[startDate.getDay()];
-      lesson.startTime = startDate;
-      lesson.endTime = endDate;
+    const oldDuration = (lesson.endTime.getTime() - lesson.startTime.getTime()) / (1000 * 60 * 60);
+    const hourlyRate = Number(lesson.price) / oldDuration;
+
+    const newDuration = (endMs - startMs) / (1000 * 60 * 60);
+    const newTotalPrice = Math.round(hourlyRate * newDuration);
+
+    const overlapping = await this.lessonTempRepo.findOne({
+      where: {
+        id: Not(lesson.id), // O'zini hisobga olmaydi
+        teacherId: lesson.teacherId,
+        status: BookedLesson.BOOKED,
+        startTime: LessThan(newEndDate),
+        endTime: MoreThan(newStartDate),
+      },
+    });
+
+    if (overlapping) {
+      throw new BadRequestException("Bu vaqtda o'qituvchining boshqa darsi bor.");
     }
 
-    // 5. Boshqa maydonlarni yangilash
-    if (dto.lessonName) lesson.lessonName = dto.lessonName;
-    if (dto.lessonPrice) lesson.price = dto.lessonPrice;
+    lesson.startTime = newStartDate;
+    lesson.endTime = newEndDate;
+    lesson.price = newTotalPrice;
 
-    return await this.lessonTempRepo.save(lesson);
+    const weekDayMap = [
+      WeekDays.SUNDAY, WeekDays.MONDAY, WeekDays.TUESDAY,
+      WeekDays.WEDNESDAY, WeekDays.THURSDAY, WeekDays.FRIDAY, WeekDays.SATURDAY
+    ];
+    lesson.weekDays = weekDayMap[newStartDate.getDay()];
+
+    await this.lessonTempRepo.save(lesson);
+
+    return {
+      message: "Dars vaqti muvaffaqiyatli o'zgartirildi",
+      meetLink: lesson.meetLink, // O'sha eski link qaytadi
+      newPrice: newTotalPrice,
+      newTime: `${newStartDate.toLocaleString()} - ${newEndDate.toLocaleTimeString()}`
+    };
   }
 
   // ------------------ CRON EXPIRE TIME ------------------
 
-  @Cron('1 0 * * *')
-  async handleDailyCleanup() {
-    this.logger.log('Kundalik tozalash boshlandi (00:01)...');
-
-    const now = new Date();
-
-    // 1. Vaqti o'tib ketgan va hali aktiv bo'lgan darslarni topish
-    const expiredLessons = await this.lessonTempRepo.find({
-      where: {
-        startTime: LessThan(now),
-        isActive: true,
-      },
-      relations: { teacher: true },
-    });
-
-    if (expiredLessons.length === 0) {
-      this.logger.log("Tozalash uchun darslar topilmadi.");
-      return;
-    }
-
-    this.logger.log(`${expiredLessons.length} ta darsni qayta ishlash boshlandi.`);
-
-    for (const lesson of expiredLessons) {
-      const oauth2Client = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET,
-      );
-      oauth2Client.setCredentials({ refresh_token: lesson.teacher.googleRefreshToken });
-
-      const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
-
-      if (lesson.googleEventId) {
-        try {
-          await calendar.events.delete({
-            calendarId: 'primary',
-            eventId: lesson.googleEventId,
-          });
-          this.logger.log(`Google Event o'chirildi: ${lesson.googleEventId}`);
-        } catch (googleError: any) {
-          this.logger.warn(`Google Event o'chirishda xato (ID: ${lesson.googleEventId}): ${googleError.message}`);
-        }
-      }
-
-      await this.lessonTempRepo.update(lesson.id, {
-        isActive: false
-      });
-      this.logger.log(`Bazada dars deaktiv qilindi: ID ${lesson.id}`);
-    }
-    this.logger.log('Kundalik tozalash yakunlandi.');
-  }
-  // ------------------ LESSON PAYMENT TO TECHER------------------
-
+  // Cron logikasini bitta joyda jamlash tavsiya etiladi
   @Cron('1 1 * * *')
   async handleLessonStatusAndPayouts() {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -430,48 +302,57 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
     try {
       const now = new Date();
 
-      // 1. Muddati o'tgan va sotilmagan darslarni EXPIRED qilish
+      // 1. Kurs hamyonini tekshirish (Muhim joyi!)
+      const courseWallet = await queryRunner.manager.findOne(CourseEntity, {
+        where: { name: CourseSetting.NAME }
+      });
+
+      if (!courseWallet) {
+        this.logger.error("Course wallet topilmadi. To'lovlar to'xtatildi.");
+        await queryRunner.rollbackTransaction();
+        return;
+      }
+
       await queryRunner.manager.update(LessonTemplateEntity,
         { startTime: LessThan(now), status: BookedLesson.PENDING },
         { status: BookedLesson.EXPIRED, isActive: false }
       );
 
-      // 2. Kecha bo'lib o'tgan va BOOKED bo'lgan darslarni COMPLETED qilish va pulni o'tkazish
       const finishedLessons = await queryRunner.manager.find(LessonTemplateEntity, {
         where: {
-          startTime: LessThan(now),
+          endTime: LessThan(now), // Dars tugagan bo'lishi kerak
           status: BookedLesson.BOOKED,
           isPaidToTeacher: false
         },
         relations: { teacher: true }
       });
 
-      const courseWallet = await queryRunner.manager.findOne(CourseEntity, { where: { name: CourseSetting.NAME } });
-      if (!courseWallet) {
-        throw new NotFoundException("Course wallet topilmadi");
-      }
-
       for (const lesson of finishedLessons) {
-        const teacherShare = lesson.price * 0.9;
+        const teacherShare = Math.floor(Number(lesson.price) * 0.9);
 
-        // Pul taqsimoti
-        courseWallet.wallet -= teacherShare;
-        lesson.teacher.wallet += teacherShare;
+        if (courseWallet.wallet >= teacherShare) {
+          courseWallet.wallet = Number(courseWallet.wallet) - teacherShare;
+          lesson.teacher.wallet = Number(lesson.teacher.wallet) + teacherShare;
 
-        // Statuslarni yangilash
-        lesson.status = BookedLesson.COMPLETED;
-        lesson.isPaidToTeacher = true;
+          lesson.status = BookedLesson.COMPLETED;
+          lesson.isPaidToTeacher = true;
+          lesson.isActive = false;
 
-        await queryRunner.manager.save(lesson.teacher);
-        await queryRunner.manager.save(lesson);
+          await queryRunner.manager.save(lesson.teacher);
+          await queryRunner.manager.save(lesson);
+        } else {
+          this.logger.warn(`Kurs hamyonida mablag' yetarli emas. Lesson ID: ${lesson.id}`);
+        }
       }
-
       await queryRunner.manager.save(courseWallet);
-      await queryRunner.commitTransaction();
 
+      await queryRunner.commitTransaction();
       this.logger.log("Darslar holati yangilandi va to'lovlar yakunlandi.");
+
     } catch (error) {
-      await queryRunner.rollbackTransaction();
+      if (queryRunner.isTransactionActive) {
+        await queryRunner.rollbackTransaction();
+      }
       this.logger.error("Cron xatosi: " + error.message);
     } finally {
       await queryRunner.release();

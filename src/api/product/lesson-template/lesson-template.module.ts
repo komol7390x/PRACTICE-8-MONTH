@@ -8,12 +8,22 @@ import { StudentEntity } from 'src/api/user/student/entities/student.entity';
 import { PaymentModule } from '../payment/payment.module';
 import { AuthModule } from 'src/api/user/auth/auth.module';
 import { CourseEntity } from '../course/entities/course.entity';
+import { ScheduleEntity } from '../schedule/entities/schedule.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LessonTemplateEntity,
-    TeacherEntity, StudentEntity, CourseEntity]), PaymentModule, AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([
+      LessonTemplateEntity,
+      TeacherEntity,
+      StudentEntity,
+      CourseEntity,
+      ScheduleEntity,
+    ]),
+    PaymentModule,
+    AuthModule,
+  ],
   controllers: [LessonTemplateController],
   providers: [LessonTemplateService],
-  exports: [LessonTemplateService]
+  exports: [LessonTemplateService],
 })
 export class LessonTemplateModule { }

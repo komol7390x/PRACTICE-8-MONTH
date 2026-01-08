@@ -12,6 +12,12 @@ export class ScheduleEntity extends BaseEntity {
     @Column({ type: 'enum', enum: WeekDays, nullable: true })
     weekDays: WeekDays;
 
+    @Column({ type: 'varchar', nullable: true })
+    googleEventId: string;
+
+    @Column({ type: 'varchar', nullable: true })
+    meetLink: string;
+
     @Column({ type: 'varchar' })
     lessonName: string;
 
