@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, ParseBoolPipe, ParseEnumPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, ParseBoolPipe, ParseEnumPipe, ParseIntPipe } from '@nestjs/common';
 import { CertificateService } from './certificate.service';
 import { CreateCertificateDto } from './dto/create-certificate.dto';
 import { UpdateCertificateDto } from './dto/update-certificate.dto';
@@ -70,7 +70,19 @@ export class CertificateController {
     return this.certificateService.findOneCertificate(+id);
   }
 
+ // --------------------- IS ACTIVE ---------------------
 
+  @Patch('is-active/:id')
+
+  @ApiOperation({ summary: 'is active admin and teacher' })
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, Roles.TEACHER, 'ID')
+
+  isActive(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('active', new ParseBoolPipe) active: boolean,
+  ) {
+    return this.certificateService.updateStatus(id, active);
+  }
   // ---------------------- UPDATE ----------------------
 
   @Patch(':id')
