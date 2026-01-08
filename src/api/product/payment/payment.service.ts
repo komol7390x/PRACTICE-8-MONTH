@@ -10,7 +10,7 @@ import { Roles } from 'src/common/enum/roles.enum';
 import { PaymentStatus } from './enum/payment-status';
 import { CourseSetting } from '../course/enum/cours-name';
 import { CourseEntity } from '../course/entities/course.entity';
-import { successRes } from 'src/infrastructure/response/success.response';
+import { ScheduleEntity } from '../schedule/entities/schedule.entity';
 
 @Injectable()
 export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentDto, PaymentEntity> {
@@ -27,85 +27,71 @@ export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentD
     role?: Roles,
     lessonId: number
   }) {
-    // 1. Kiruvchi price'ni raqamga o'girish
-    const price = Number(dto.price);
     const { studentId, role, lessonId } = dto;
+    const price = Number(dto.price);
 
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    await queryRunner.startTransaction();
+    return await this.dataSource.transaction(async (manager) => {
+      try {
+        // 1. Dars mavjudligini tekshirish
+        const lesson = await manager.findOne(ScheduleEntity, { where: { id: lessonId } });
+        if (!lesson) {
+          throw new BadRequestException(`${lessonId}-IDli dars topilmadi`);
+        }
 
-    try {
-      const student = await queryRunner.manager.findOne(StudentEntity, {
-        where: { id: studentId, isActive: true, isDeleted: false },
-        lock: { mode: 'pessimistic_write' }
-      });
+        // 2. Studentni tekshirish
+        const student = await manager.findOne(StudentEntity, {
+          where: { id: studentId, isActive: true, isDeleted: false },
+          lock: { mode: 'pessimistic_write' }
+        });
 
-      if (!student) {
-        throw new BadRequestException(`${studentId} student topilmadi`);
-      }
+        if (!student) {
+          throw new BadRequestException(`${studentId}-IDli aktiv student topilmadi`);
+        }
 
-      // 2. Student hamyonini raqamga o'girib tekshirish
-      const studentWallet = Number(student.wallet);
+        const studentWallet = Number(student.wallet);
+        if (studentWallet < price) {
+          throw new BadRequestException(`Balans yetarli emas. Balans: ${studentWallet}`);
+        }
 
-      if (studentWallet < price) {
-        throw new BadRequestException(`Student balansida mablag' yetarli emas. Balans: ${studentWallet}, Narx: ${price}`);
-      }
+        // 3. Tizim hamyoni
+        const courseWalletEntity = await manager.findOne(CourseEntity, {
+          where: { name: CourseSetting.NAME }
+        });
 
-      const courseWalletEntity = await queryRunner.manager.findOne(CourseEntity, {
-        where: { name: CourseSetting.NAME }
-      });
+        if (!courseWalletEntity) {
+          throw new BadRequestException("Tizim hamyoni topilmadi");
+        }
 
-      if (!courseWalletEntity) {
-        throw new BadRequestException("Tizim hamyoni topilmadi");
-      }
+        // 4. Balanslarni yangilash
+        student.wallet = studentWallet - price;
+        courseWalletEntity.wallet = Number(courseWalletEntity.wallet) + price;
 
-      // 3. Hisob-kitob qismini Number bilan bajarish
-      const currentCourseWallet = Number(courseWalletEntity.wallet);
+        await manager.save(student);
+        await manager.save(courseWalletEntity);
 
-      student.wallet = studentWallet - price;
-      courseWalletEntity.wallet = currentCourseWallet + price;
-
-      // 4. Ma'lumotlarni saqlash
-      await queryRunner.manager.save(student);
-      await queryRunner.manager.save(courseWalletEntity);
-
-      // 5. To'lov tarixini saqlash
-      const payment = queryRunner.manager.create(PaymentEntity, {
-        lessonId,
-        studentId,
-        price: price,
-        status: PaymentStatus.PAID,
-        role: role,
-        reason: 'Lesson booking'
-      });
-      await queryRunner.manager.save(payment);
-
-      await queryRunner.commitTransaction();
-      return true;
-
-    } catch (error) {
-      if (queryRunner.isTransactionActive) {
-        await queryRunner.rollbackTransaction();
-      }
-
-      if (!(error instanceof BadRequestException)) {
-        await this.paymanetRepo.save(this.paymanetRepo.create({
+        // 5. To'lov tarixini yaratish
+        const payment = manager.create(PaymentEntity, {
           lessonId,
           studentId,
           price: price,
-          status: PaymentStatus.PAID_CANCELED,
-          role: role
-        }));
+          status: PaymentStatus.PAID,
+          role: role,
+          reason: 'Lesson booking'
+        });
+        
+        return await manager.save(payment);
+
+      } catch (error) {
+        // Xatoni konsolga chiqarish (Siz so'ragan qism)
+        console.error('--- PAYMENT ERROR LOG ---');
+        console.error('Message:', error.message);
+        console.error('Detail:', error.detail); // Baza xatosi (FK xatosi bo'lsa, qaysi ID ekanini ko'rsatadi)
+        console.error('Stack:', error.stack);
+        throw error;
       }
-
-      if (error instanceof BadRequestException) throw error;
-      throw new InternalServerErrorException("To'lov jarayonida xato: " + error.message);
-
-    } finally {
-      await queryRunner.release();
-    }
+    });
   }
+
   // ------------------ FIND ALL LESSON PAYMENT ------------------
 
   async findAllPayment(filters: {

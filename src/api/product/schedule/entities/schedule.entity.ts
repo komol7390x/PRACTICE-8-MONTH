@@ -1,7 +1,8 @@
 import { BaseEntity } from "src/core/base.entity";
-import { Column, Entity, JoinColumn, ManyToOne } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from "typeorm";
 import { WeekDays } from "../../lesson-template/enum/week-day";
 import { TeacherEntity } from "src/api/user/teacher/entities/teacher.entity";
+import { PaymentEntity } from "../../payment/entities/payment.entity";
 
 @Entity('schedules')
 export class ScheduleEntity extends BaseEntity {
@@ -34,4 +35,7 @@ export class ScheduleEntity extends BaseEntity {
         { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'teacherId' })
     teacher: TeacherEntity;
+
+    @OneToMany(() => PaymentEntity, (lesson) => lesson.student)
+    payments: PaymentEntity[];
 }

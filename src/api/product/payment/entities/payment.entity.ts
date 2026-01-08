@@ -5,6 +5,7 @@ import { Roles } from "src/common/enum/roles.enum";
 import { StudentEntity } from "src/api/user/student/entities/student.entity";
 import { TeacherEntity } from "src/api/user/teacher/entities/teacher.entity";
 import { LessonTemplateEntity } from "../../lesson-template/entities/lesson-template.entity";
+import { ScheduleEntity } from "../../schedule/entities/schedule.entity";
 
 @Entity('payment')
 export class PaymentEntity extends BaseEntity {
@@ -45,8 +46,8 @@ export class PaymentEntity extends BaseEntity {
     @JoinColumn({ name: 'teacherId' })
     teacher: TeacherEntity
 
-    @ManyToOne(() => LessonTemplateEntity, (student) => student.payments,
+    @ManyToOne(() => ScheduleEntity, (student) => student.payments,
         { onDelete: 'CASCADE', onUpdate: 'CASCADE', nullable: true })
     @JoinColumn({ name: 'lessonId' })
-    lesson: LessonTemplateEntity
+    lesson: ScheduleEntity
 }

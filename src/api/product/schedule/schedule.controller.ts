@@ -41,7 +41,8 @@ export class ScheduleController {
 
   @Get()
 
-  @AccessRoles(Roles.ADMIN, Roles.SUPER_ADMIN)
+  // @AccessRoles(Roles.ADMIN, Roles.SUPER_ADMIN)
+  @AccessRoles('public')
   @ApiOperation({ summary: 'find all schedule' })
   @ApiScheduleQueries()
 

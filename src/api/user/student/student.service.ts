@@ -4,8 +4,7 @@ import { UpdateStudentDto } from './dto/update-student.dto';
 import { BaseService } from 'src/infrastructure/base/base.service';
 import { StudentEntity } from './entities/student.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Brackets, FindOptionsOrder, Repository } from 'typeorm';
-import { StudentStatus } from './enum/student-status';
+import { Brackets, Repository } from 'typeorm';
 import { StudentSort } from './enum/student-sort';
 import { type IToken } from 'src/infrastructure/token/interface';
 import { successRes } from 'src/infrastructure/response/success.response';
@@ -186,6 +185,7 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
   }
   // -------------------- ADD BALANCE --------------------
   async addBalance(id: number, balance: number) {
+    
     const student = await this.studentRepository.findOne({ where: { id } })
     if (!student) {
       throw new NotFoundException(`${id} not found on Student`)

@@ -25,23 +25,23 @@ export class LessonTemplateController {
   @ApiOperation({ summary: 'book lesson by student' })
   @AccessRoles(Roles.STUDENT, Roles.ADMIN, Roles.SUPER_ADMIN)
   // @AccessRoles('public')
-    
+
   async bookLessonByStudent(
     @Param('id', ParseIntPipe) id: number,
     @Query('lessonId', ParseIntPipe) lessonId: number,
     @Body() dto: CreateLessonTemplateDto
-  ) {
+  ) {    
     return this.lessonTemplateService.bookScheduleByStudent(id, lessonId, dto)
   }
 
   // --------------------- GET ALL BOOK LESSON ---------------------
 
   @Get()
-    
+
   @ApiOperation({ summary: 'get all book lesson for admin' })
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
   @ApiLessonFilters()
-    
+
   getAllBookLesson(
     @Query('status') status?: BookedLesson,
     @Query('weekday') weekday?: WeekDays,
@@ -76,12 +76,12 @@ export class LessonTemplateController {
   // ------------------ GET ONE LESSON FOR TEACHER ------------------
 
   @Get('teacher')
-    
+
   @ApiOperation({ summary: 'Get lesson for teacher' })
   @AccessRoles(Roles.TEACHER, 'ID')
   @ApiLessonFiltersTeacher()
 
-    
+
   async teacherLesson(
     @CurrentUser('user') user: IToken,
     @Query('status') status?: BookedLesson,
@@ -112,7 +112,7 @@ export class LessonTemplateController {
   // ------------------ GET ONE LESSON FOR STUDENT ------------------
 
   @Get('student')
-    
+
   @ApiOperation({ summary: 'Get lesson for student' })
   @AccessRoles(Roles.STUDENT, 'ID')
   @ApiLessonFiltersStudent()

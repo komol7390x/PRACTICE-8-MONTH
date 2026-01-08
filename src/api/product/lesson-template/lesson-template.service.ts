@@ -44,6 +44,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
   // ------------------------BOOKED LESSON BY STUDENT------------------------
 
   async bookScheduleByStudent(studentId: number, scheduleId: number, dto: CreateLessonTemplateDto) {
+
     const { startTime, finishTime } = dto;
 
     // 1. Student va Schedule topish (relations bilan)
@@ -95,6 +96,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
       studentId,
       role: Roles.STUDENT
     });
+    
     if (!payment) throw new ConflictException("To'lov amalga oshmadi.");
 
     // 6. Saqlash
@@ -114,7 +116,7 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
     return await this.lessonTempRepo.save(bookedLesson);
   }
 
- 
+
 
   // ------------------GET ALL LESSON BOOK ------------------
 

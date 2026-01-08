@@ -50,7 +50,4 @@ export class LessonTemplateEntity extends BaseEntity {
         { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
     @JoinColumn({ name: 'studentId' })
     student: StudentEntity;
-
-    @OneToMany(() => PaymentEntity, (lesson) => lesson.student)
-    payments: PaymentEntity[];
 }
