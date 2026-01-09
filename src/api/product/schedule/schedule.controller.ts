@@ -134,7 +134,7 @@ export class ScheduleController {
   @Delete('delete/:id')
 
   @ApiOperation({ summary: 'for super admin' })
-  @AccessRoles(Roles.SUPER_ADMIN)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.TEACHER)
 
   delete(@Param('id', ParseIntPipe) id: number) {
     return this.scheduleService.deleteSchedule(id);
