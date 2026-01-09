@@ -138,7 +138,7 @@ export class ScheduleService extends BaseService<CreateScheduleDto, UpdateSchedu
 
     return await this.scheduleRepo.save(newSchedule);
   }
-  
+
   // ------------------------- FIND ALL SCHEDULE -------------------------
 
   async findAllSchedule(
@@ -217,7 +217,7 @@ export class ScheduleService extends BaseService<CreateScheduleDto, UpdateSchedu
   }
 
   // ------------------------- UPDATE SCHEDULE -------------------------
-  
+
   async updateSchedule(id: number, dto: UpdateScheduleDto) {
     const { startTime, finishTime } = dto;
 
@@ -278,5 +278,54 @@ export class ScheduleService extends BaseService<CreateScheduleDto, UpdateSchedu
     });
 
     return await this.scheduleRepo.save(schedule);
+  }
+
+  // ------------------------- UPDATE SCHEDULE -------------------------
+  async deleteSchedule(scheduleId: number) {
+    // 1. Darsni va unga biriktirilgan o'qituvchini topish
+    const schedule = await this.scheduleRepo.findOne({
+      where: { id: scheduleId },
+      relations: { teacher: true }
+    });
+
+    if (!schedule) {
+      throw new NotFoundException(`Dars topilmadi (ID: ${scheduleId})`);
+    }
+
+    const teacher = schedule.teacher;
+
+    // 2. Google Calendar'dan o'chirish
+    if (schedule.googleEventId && teacher?.googleRefreshToken) {
+      try {
+        // Tokenni yangilash (Service ichidagi metod orqali)
+        await this.authService.refreshGoogleToken(teacher.id);
+
+        const oauth2Client = new google.auth.OAuth2(
+          process.env.GOOGLE_CLIENT_ID,
+          process.env.GOOGLE_CLIENT_SECRET
+        );
+
+        oauth2Client.setCredentials({ refresh_token: teacher.googleRefreshToken });
+        const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+        // Google tadbirini o'chirish
+        await calendar.events.delete({
+          calendarId: 'primary',
+          eventId: schedule.googleEventId,
+        });
+
+        console.log(`✅ Google tadbir o'chirildi: ${schedule.googleEventId}`);
+      } catch (error) {
+        // Agar dars kalendarda topilmasa ham bazadan o'chaverishi uchun catch qilamiz
+        console.error("❌ Google Calendar xatosi:", error.response?.data || error.message);
+      }
+    }
+
+    await this.scheduleRepo.remove(schedule);
+
+    return {
+      success: true,
+      message: "Dars bazadan va Google Calendardan muvaffaqiyatli o'chirildi"
+    };
   }
 }

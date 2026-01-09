@@ -137,7 +137,7 @@ export class ScheduleController {
   @AccessRoles(Roles.SUPER_ADMIN)
 
   delete(@Param('id', ParseIntPipe) id: number) {
-    return this.scheduleService.delete(id);
+    return this.scheduleService.deleteSchedule(id);
   }
 
 }
