@@ -83,6 +83,7 @@ export class CertificateController {
   ) {
     return this.certificateService.updateStatus(id, active);
   }
+
   // ---------------------- UPDATE ----------------------
 
   @Patch(':id')
@@ -93,6 +94,8 @@ export class CertificateController {
   update(@Param('id') id: string, @Body() dto: UpdateCertificateDto) {
     return this.certificateService.updateCertificate(+id, dto);
   }
+
+  
   // ---------------------- SOFT DELETE ----------------------
 
   @Delete('soft/:id')
