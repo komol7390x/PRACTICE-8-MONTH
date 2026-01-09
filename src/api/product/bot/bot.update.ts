@@ -60,7 +60,7 @@ export class BotUpdate implements OnModuleInit {
             await ctx.reply(
                 'Pastdagi tugma orqali ilovaga kiring:',
                 Markup.inlineKeyboard([
-                    [Markup.button.webApp('🚀 Ilovani ochish', 'https://twa-demo.netlify.app/')]
+                    [Markup.button.webApp('🚀 Ilovani ochish', 'https://cataractal-unperiphrastic-catherina.ngrok-free.dev/telegram/student-schedule?day=Friday&active=true')]
                 ])
             );
             return
@@ -146,8 +146,6 @@ export class BotUpdate implements OnModuleInit {
             return
         }
 
-
-        // Xavfsiz saqlash (Optional chaining bilan)
         const student: CreateBotDto = {
             tgId: String(ctx.from.id),
             firstName: ctx.session?.firstName || ctx.from.first_name,

@@ -4,6 +4,7 @@ import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TeacherEntity } from '../../teacher/entities/teacher.entity';
 import { Repository } from 'typeorm';
+import { appConfig } from 'src/config';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -13,7 +14,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
         super({
             clientID: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            callbackURL: 'http://localhost:3030/api/v1/auth/google/callback',
+            callbackURL: `${appConfig.FRONT_URL}/teacher/google/step-2`,
             scope: [
                 'email',
                 'profile',

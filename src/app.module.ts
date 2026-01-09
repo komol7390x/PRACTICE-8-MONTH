@@ -61,11 +61,11 @@ import { ScheduleTeacherModule } from './api/product/schedule/schedule.module';
             },
         }),
         JwtModule.register({ global: true }),
-        // TelegrafModule.forRoot({
-        //     token: appConfig.TELEGRAM_BOT_TOKEN,
-        //     launchOptions: {},
-        //     middlewares: [session()]
-        // }),
+        TelegrafModule.forRoot({
+            token: appConfig.TELEGRAM_BOT_TOKEN,
+            launchOptions: {},
+            middlewares: [session()]
+        }),
         ScheduleTeacherModule,
         LessonTemplateModule,
         AuthModule,
@@ -75,7 +75,7 @@ import { ScheduleTeacherModule } from './api/product/schedule/schedule.module';
         PaymentModule,
         CertificateModule,
         NotificationModule,
-        // BotModule,
+        BotModule,
         CourseModule,
         StatisticaModule,
         ScheduleModule,
@@ -84,3 +84,4 @@ import { ScheduleTeacherModule } from './api/product/schedule/schedule.module';
     providers: [],
 })
 export class AppModule { }
+

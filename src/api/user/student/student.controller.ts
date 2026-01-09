@@ -66,7 +66,7 @@ export class StudentController {
 
   @Get(':id')
   @ApiOperation({ summary: 'for super admin and admin' })
-  @AccessRoles(Roles.SUPER_ADMIN, Roles.STUDENT, 'ID', Roles.ADMIN)
+  @AccessRoles(Roles.SUPER_ADMIN, Roles.STUDENT, 'ID', Roles.ADMIN, Roles.TEACHER)
 
   findOne(
     @Param('id') id: string) {

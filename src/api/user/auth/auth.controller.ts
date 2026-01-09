@@ -65,7 +65,7 @@ export class AuthController {
         if (step === 'completed') {
             await this.authService.generateTokens(item.id, res)
             // Teacher dashboard'ga redirect
-            return res.redirect(`${appConfig.FRONT_URL}/teacher-panel/statistics`);
+            return res.redirect(`${appConfig.FRONT_URL}/teacher/login`);
         }
 
         // // Agar account inactive bo'lsa
