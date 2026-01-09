@@ -12,6 +12,8 @@ export const ApiPaymentFilters = () => {
         ApiQuery({ name: 'search', type: String, required: false, description: 'Qidiruv: lessonId, studentId, teacherId, reason' }),
         ApiQuery({ name: 'page', type: Number, required: false, example: 1 }),
         ApiQuery({ name: 'limit', type: Number, required: false, example: 10 }),
+        ApiQuery({ name: 'userId', type: Number, required: false, example: 10 }),
+
     );
 };
 

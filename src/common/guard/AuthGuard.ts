@@ -2,7 +2,6 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
-  InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -26,37 +25,31 @@ export class AuthGuard implements CanActivate {
     if (roles?.includes('public')) return true;
 
     const req = ctx.switchToHttp().getRequest();
-    const cookiesToken =
+    const token =
       req.cookies?.[TokenName.ADMIN_TOKEN] ||
-      req.cookies?.[TokenName.TEACHER_TOKEN];
-    if (cookiesToken) {
-      const data = this.jwt.verify(cookiesToken, {
-        secret: appConfig.TOKEN.ACCESS_TOKEN_KEY,
-      });
-      if (data) {
-        req.user = data
-        return true
-      }
-    }
+      req.cookies?.[TokenName.TEACHER_TOKEN] ||
+      this.extractTokenFromHeader(req) ||
+      req.query?.token;
 
-    const auth = req.headers.authorization as string | undefined;
-    if (!auth?.startsWith('Bearer ')) throw new UnauthorizedException();
-    const token = auth.split(' ')[1];
+    if (!token) throw new UnauthorizedException('Token topilmadi');
+
     try {
       const data = this.jwt.verify(token, {
         secret: appConfig.TOKEN.ACCESS_TOKEN_KEY,
       });
+
       req.user = data;
       return true;
     } catch (error: any) {
       if (error.name === 'TokenExpiredError') {
         throw new UnauthorizedException('Token expired');
-      } else if (error.name === 'JsonWebTokenError') {
-        throw new UnauthorizedException('Invalid token');
-      } else if (error instanceof UnauthorizedException) {
-        throw error;
       }
-      throw new InternalServerErrorException('Unexpected error occurred');
+      throw new UnauthorizedException('Invalid token');
     }
+  }
+
+  private extractTokenFromHeader(request: any): string | undefined {
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
+    return type === 'Bearer' ? token : undefined;
   }
 }

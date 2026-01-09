@@ -96,8 +96,9 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
       studentId,
       role: Roles.STUDENT
     });
-    
+
     if (!payment) throw new ConflictException("To'lov amalga oshmadi.");
+    console.log(111, schedule, payment);
 
     // 6. Saqlash
     const bookedLesson = this.lessonTempRepo.create({
@@ -110,7 +111,8 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
       googleEventId: schedule.googleEventId,
       meetLink: schedule.meetLink,
       status: BookedLesson.BOOKED,
-      weekDays: schedule.weekDays
+      weekDays: schedule.weekDays,
+      isActive: true,
     });
 
     return await this.lessonTempRepo.save(bookedLesson);

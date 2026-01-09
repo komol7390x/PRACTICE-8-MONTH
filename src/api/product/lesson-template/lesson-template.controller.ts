@@ -30,7 +30,7 @@ export class LessonTemplateController {
     @Param('id', ParseIntPipe) id: number,
     @Query('lessonId', ParseIntPipe) lessonId: number,
     @Body() dto: CreateLessonTemplateDto
-  ) {    
+  ) {
     return this.lessonTemplateService.bookScheduleByStudent(id, lessonId, dto)
   }
 
@@ -39,7 +39,8 @@ export class LessonTemplateController {
   @Get()
 
   @ApiOperation({ summary: 'get all book lesson for admin' })
-  @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
+  // @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN)
+  @AccessRoles('public')
   @ApiLessonFilters()
 
   getAllBookLesson(
@@ -111,14 +112,15 @@ export class LessonTemplateController {
 
   // ------------------ GET ONE LESSON FOR STUDENT ------------------
 
-  @Get('student')
+  @Get('student/:studentId')
 
   @ApiOperation({ summary: 'Get lesson for student' })
-  @AccessRoles(Roles.STUDENT, 'ID')
+  // @AccessRoles(Roles.STUDENT, 'ID')
+  @AccessRoles('public')
   @ApiLessonFiltersStudent()
 
   async studentLesson(
-    @CurrentUser('user') user: IToken,
+    @Param('studentId', ParseIntPipe) studentId: number,
     @Query('status') status?: BookedLesson,
     @Query('weekday') weekday?: WeekDays,
     @Query('search') search?: string,
@@ -138,7 +140,7 @@ export class LessonTemplateController {
       search,
       page: pageNumber,
       limit: limitNumber,
-      studentId: user.id
+      studentId: studentId
     })
   }
 

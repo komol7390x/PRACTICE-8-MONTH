@@ -124,8 +124,9 @@ export class ScheduleController {
   @ApiOperation({ summary: 'for super admin and admin' })
   @AccessRoles(Roles.SUPER_ADMIN, Roles.ADMIN, Roles.TEACHER)
 
-  softDelete(@Param('id', ParseIntPipe) id: number) {
-    return this.scheduleService.softDelete(id);
+  softDelete(@Param('id', ParseIntPipe) id: number,
+    @Query('active', new ParseBoolPipe) active: boolean,) {
+    return this.scheduleService.softDelete(id, active);
   }
 
   // ---------------------  DELETE ---------------------

@@ -11,6 +11,7 @@ import { PaymentStatus } from './enum/payment-status';
 import { CourseSetting } from '../course/enum/cours-name';
 import { CourseEntity } from '../course/entities/course.entity';
 import { ScheduleEntity } from '../schedule/entities/schedule.entity';
+import { use } from 'passport';
 
 @Injectable()
 export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentDto, PaymentEntity> {
@@ -78,7 +79,7 @@ export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentD
           role: role,
           reason: 'Lesson booking'
         });
-        
+
         return await manager.save(payment);
 
       } catch (error) {
@@ -102,6 +103,7 @@ export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentD
     search?: string;
     active?: boolean;
     deleted?: boolean;
+    userId?: number;
   }) {
     const {
       page = 1,
@@ -111,6 +113,7 @@ export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentD
       search,
       active,
       deleted = false,
+      userId
     } = filters;
 
     const queryBuilder = this.paymanetRepo.createQueryBuilder('payment');
@@ -126,6 +129,10 @@ export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentD
     }
     if (active !== undefined) {
       queryBuilder.andWhere('payment.isActive = :active', { active });
+    }
+
+    if (userId) {
+      queryBuilder.andWhere('payment.studentId = :userId OR payment.teacherId = :userId ', { userId });
     }
 
     // 2. Maxsus Qidiruv (lessonId, studentId, teacherId, reason)
@@ -184,7 +191,7 @@ export class PaymentService extends BaseService<CreatePaymentDto, UpdatePaymentD
     status?: PaymentStatus,
     search?: string,
     page: number = 1,
-    limit: number = 10,
+    limit: number = 100,
     role?: string,
   ) {
     // 1. Asosiy shart (Kim so'rayotganiga qarab)

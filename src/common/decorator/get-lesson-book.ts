@@ -114,6 +114,7 @@ export function ApiLessonFiltersStudent() {
             required: false,
             description: "Dars holati",
         }),
+        
         ApiQuery({
             name: 'weekday',
             enum: WeekDays,

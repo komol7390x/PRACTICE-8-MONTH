@@ -3,6 +3,8 @@ import { Context, Markup } from 'telegraf';
 import { BotService } from './bot.service';
 import { CreateBotDto } from './dto/create-bot.dto';
 import { OnModuleInit } from '@nestjs/common';
+import { TokenService } from 'src/infrastructure/token/Token';
+import { Roles } from 'src/common/enum/roles.enum';
 
 interface BotSession {
     step?: 'FIRST_NAME' | 'LAST_NAME' | 'PHONE';
@@ -12,7 +14,10 @@ interface BotSession {
 
 @Update()
 export class BotUpdate implements OnModuleInit {
-    constructor(private readonly botService: BotService) { }
+    constructor(private readonly botService: BotService,
+        private readonly tokenService: TokenService,
+
+    ) { }
     async onModuleInit() {
         console.log('🚀 Bot menyusi o\'rnatilmoqda...');
     }
@@ -57,10 +62,16 @@ export class BotUpdate implements OnModuleInit {
                 "/profile - Mening profilim\n\n" +
                 "Muammo yuzaga kelsa, adminga murojaat qiling."
             );
+            const tokenPayload = {
+                id: user.id,
+                role: Roles.STUDENT,
+                isActive: user.isActive
+            };
+            const token = await this.tokenService.accessToken(tokenPayload);
             await ctx.reply(
-                'Pastdagi tugma orqali ilovaga kiring:',
+                "📚 **Xush kelibsiz!**\nSiz tizimdan ro'yxatdan o'tgansiz.",
                 Markup.inlineKeyboard([
-                    [Markup.button.webApp('🚀 Ilovani ochish', 'https://cataractal-unperiphrastic-catherina.ngrok-free.dev/telegram/student-schedule?day=Friday&active=true')]
+                    [Markup.button.webApp('🚀 Ilovani ochish', `https://cataractal-unperiphrastic-catherina.ngrok-free.dev/telegram/student-schedule?token=${token}`)]
                 ])
             );
             return
@@ -153,11 +164,24 @@ export class BotUpdate implements OnModuleInit {
             phoneNumber: contact.phone_number,
             tgUsername: String(ctx.from.username),
         };
-        await this.botService.create(student);
-
-        ctx.session = {}; // Sessionni tozalash
-
-        await ctx.reply("✅ Muvaffaqiyatli ro'yxatdan o'tdingiz!", Markup.removeKeyboard());
+        const result = await this.botService.create(student);
+        const tokenPayload = {
+            id: result.id,
+            role: Roles.STUDENT,
+            isActive: result.isActive
+        };
+        const token = await this.tokenService.accessToken(tokenPayload);
+        ctx.session = {};
+        
+        await ctx.reply(
+            "Ilovani ochish uchun tugmani bosing:",
+            Markup.inlineKeyboard([
+                [Markup.button.webApp(
+                    '🚀 Ilovani ochish',
+                    `https://cataractal-unperiphrastic-catherina.ngrok-free.dev/telegram/student-schedule?token=${token}`
+                )]
+            ])
+        );
 
     }
 }

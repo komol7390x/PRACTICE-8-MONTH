@@ -32,7 +32,8 @@ export class PaymentController {
 
   @ApiPaymentFilters()
   @ApiOperation({ summary: 'registration leeson for teacher' })
-  @AccessRoles(Roles.ADMIN, Roles.SUPER_ADMIN)
+  // @AccessRoles(Roles.ADMIN, Roles.SUPER_ADMIN)
+  @AccessRoles('public')
 
   findAll(
     @Query('status', new ParseEnumPipe(PaymentStatus, { optional: true })) status?: PaymentStatus,
@@ -42,6 +43,7 @@ export class PaymentController {
     @Query('search') search?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
+    @Query('userId') userId?: number,
   ) {
     let pageNumber = page ? parseInt(page, 10) : 1;
     let limitNumber = limit ? parseInt(limit, 10) : 100;
@@ -56,7 +58,8 @@ export class PaymentController {
       role,
       search,
       page: pageNumber,
-      limit: limitNumber
+      limit: limitNumber,
+      userId
     });
   }
 
@@ -89,5 +92,5 @@ export class PaymentController {
       );
     }
   }
-  
+
 }
