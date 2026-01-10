@@ -55,7 +55,7 @@ export class ScheduleService extends BaseService<CreateScheduleDto, UpdateSchedu
         endTime: MoreThan(start),
       },
     });
-
+    
     if (overlappingSchedule) {
       const sTime = overlappingSchedule.startTime.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });
       const eTime = overlappingSchedule.endTime.toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' });

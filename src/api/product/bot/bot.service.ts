@@ -3,13 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { StudentEntity } from 'src/api/user/student/entities/student.entity';
 import { CreateBotDto } from './dto/create-bot.dto';
+import { BaseService } from 'src/infrastructure/base/base.service';
+import { UpdateBotDto } from './dto/update-bot.dto';
 
 @Injectable()
-export class BotService {
+export class BotService extends BaseService<CreateBotDto, UpdateBotDto, StudentEntity> {
   constructor(
     @InjectRepository(StudentEntity)
     private readonly userRepository: Repository<StudentEntity>,
-  ) { }
+  ) { super(userRepository) }
 
   async findByPhone(phoneNumber: string) {
     return await this.userRepository.findOne({ where: { phoneNumber } });
@@ -19,7 +21,7 @@ export class BotService {
     return await this.userRepository.findOne({ where: { tgId: telegramId } });
   }
 
-  async create(student: CreateBotDto) {
+  async createUser(student: CreateBotDto) {
     const newUser = this.userRepository.create({
       firstName: student.firstName,
       lastName: student.lastName,

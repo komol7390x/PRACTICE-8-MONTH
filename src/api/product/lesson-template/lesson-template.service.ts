@@ -32,10 +32,6 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
     @InjectRepository(ScheduleEntity)
     private readonly scheduleRepo: Repository<ScheduleEntity>,
 
-    @InjectRepository(CourseEntity)
-    private readonly courseRepo: Repository<CourseEntity>,
-
-
     private readonly dataSource: DataSource,
     private readonly paymentService: PaymentService,
 
@@ -52,27 +48,23 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
       this.studentRepo.findOne({ where: { id: studentId } }),
       this.scheduleRepo.findOne({ where: { id: scheduleId }, relations: { teacher: true } })
     ]);
-
+    console.log(student, schedule, startTime, finishTime, scheduleId, scheduleId);
     if (!student) throw new NotFoundException("Talaba topilmadi.");
     if (!schedule) throw new NotFoundException("Dars jadvali topilmadi.");
 
-    // 2. Vaqtlarni aniqlash
     const startMs = Number(startTime) * (startTime < 10000000000 ? 1000 : 1);
     const endMs = Number(finishTime) * (finishTime < 10000000000 ? 1000 : 1);
     const selectedStart = new Date(startMs);
     const selectedEnd = new Date(endMs);
 
-    // --- MUHIM TUZATISH: SANA VA VAQTNI TO'LIQ TEKSHIRISH ---
     if (selectedStart < schedule.startTime || selectedEnd > schedule.endTime) {
       throw new BadRequestException("Tanlangan vaqt o'qituvchi jadvalidan tashqarida.");
     }
 
-    // Tanlangan vaqt dars vaqti bilan bir xil kunda ekanligini tekshirish (Optional lekin tavsiya etiladi)
     if (selectedStart.toDateString() !== schedule.startTime.toDateString()) {
       throw new BadRequestException("Tanlangan sana o'qituvchi belgilagan sanaga mos emas.");
     }
 
-    // 3. Overlap check
     const overlapping = await this.lessonTempRepo.findOne({
       where: {
         teacherId: schedule.teacherId,
@@ -84,12 +76,10 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
     });
     if (overlapping) throw new BadRequestException("Bu vaqt allaqachon band qilingan.");
 
-    // 4. Narxni soatbay hisoblash
     const durationInHours = (endMs - startMs) / (1000 * 60 * 60);
     if (durationInHours <= 0) throw new BadRequestException("Vaqt oralig'i noto'g'ri.");
     const totalPrice = Math.round(Number(schedule.price) * durationInHours);
 
-    // 5. To'lov (Tranzaksiya ichida bo'lishi tavsiya etiladi)
     const payment = await this.paymentService.processLessonPayment({
       price: totalPrice,
       lessonId: schedule.id,
@@ -98,7 +88,6 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
     });
 
     if (!payment) throw new ConflictException("To'lov amalga oshmadi.");
-    console.log(111, schedule, payment);
 
     // 6. Saqlash
     const bookedLesson = this.lessonTempRepo.create({
