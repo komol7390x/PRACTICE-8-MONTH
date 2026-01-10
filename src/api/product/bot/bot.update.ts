@@ -52,18 +52,56 @@ export class BotUpdate implements OnModuleInit {
 
         const telegramId = String(ctx.from.id);
 
-        // --- ASOSIY O'ZGARIŞ: ESKI MA'LUMOTNI O'CHIRISH ---
-        const existingUser = await this.botService.findByTelegramId(telegramId);
-        if (existingUser) {
-            // Agar foydalanuvchi bo'lsa, uni o'chirib tashlaymiz (bazani tozalash)
-            await this.botService.delete(existingUser.id);
+        const user = await this.botService.findByTelegramId(telegramId);
+
+        if (user) {
+            const tokenPayload = {
+                id: user.id,
+                role: Roles.STUDENT,
+                isActive: user.isActive
+            };
+            const token = await this.tokenService.accessToken(tokenPayload);
+
+            const message = await ctx.reply(
+                "✅ Ro'yxatdan o'tdingiz!\n🚀 Ilova yuklanmoqda...",
+                Markup.inlineKeyboard([
+                    [Markup.button.webApp(
+                        '🚀 Ilovani ochish (Ngrok)',
+                        `https://cataractal-unperiphrastic-catherina.ngrok-free.dev/telegram/student-schedule?token=${token}`
+                    )]
+                ])
+            );
+
+            setTimeout(async () => {
+                if (!ctx.chat?.id) return;
+
+                try {
+                    await ctx.telegram.editMessageText(
+                        ctx.chat.id, // Endi bu yerda xato bo'lmaydi
+                        message.message_id,
+                        undefined,
+                        "⚠️ Agar yuqoridagi havola ishlamasa, lokal havoladan foydalaning:",
+                        Markup.inlineKeyboard([
+                            [Markup.button.webApp(
+                                '🚀 Ilovani ochish (Ngrok)',
+                                `https://cataractal-unperiphrastic-catherina.ngrok-free.dev/telegram/student-schedule?token=${token}`
+                            )],
+                            [Markup.button.webApp(
+                                '🏠 Ilovani ochish (Localhost)',
+                                `http://localhost:5050/telegram/student-schedule?token=${token}`
+                            )]
+                        ])
+                    );
+                } catch (error) {
+                    console.log("Xabarni tahrirlashda xato yoki xabar allaqachon o'chirilgan");
+                }
+            }, 5000);
         }
 
-        // Sessiyani tozalash va yangi bosqichga o'tkazish
         ctx.session = { step: 'FIRST_NAME' };
 
         await ctx.reply(
-            "📝 Xush kelibsiz! Ismingizni yuboring 🙂",
+            "📝 Ro'yxatdan o'tish uchun ismingizni yuboring 🙂",
             Markup.keyboard([
                 [Markup.button.text(ctx.from.first_name)],
             ]).resize().oneTime(),
@@ -93,7 +131,6 @@ export class BotUpdate implements OnModuleInit {
             return;
         }
 
-        // 2. FAMILIYANI QABUL QILISH
         if (ctx.session.step === 'LAST_NAME') {
             if (!text || text.length < 3) {
                 await ctx.reply("❌ Familiya kamida 3 ta harf bo'lishi kerak:");
@@ -122,21 +159,21 @@ export class BotUpdate implements OnModuleInit {
             return;
         }
 
-        // Kontakt yuborganda ham ehtiyot shart yana bir bor tekshiramiz
         const existingUser = await this.botService.findByTelegramId(String(ctx.from.id));
+
+        let result: any;
         if (existingUser) {
-            await this.botService.delete(existingUser.id);
+            result = existingUser;
+        } else {
+            const student: CreateBotDto = {
+                tgId: String(ctx.from.id),
+                firstName: ctx.session?.firstName || ctx.from.first_name,
+                lastName: ctx.session?.lastName || '',
+                phoneNumber: contact.phone_number,
+                tgUsername: String(ctx.from.username || ''),
+            };
+            result = await this.botService.createUser(student);
         }
-
-        const student: CreateBotDto = {
-            tgId: String(ctx.from.id),
-            firstName: ctx.session?.firstName || ctx.from.first_name,
-            lastName: ctx.session?.lastName || '',
-            phoneNumber: contact.phone_number,
-            tgUsername: String(ctx.from.username || ''),
-        };
-
-        const result = await this.botService.createUser(student);
 
         const tokenPayload = {
             id: result.id,
@@ -145,16 +182,41 @@ export class BotUpdate implements OnModuleInit {
         };
         const token = await this.tokenService.accessToken(tokenPayload);
 
-        ctx.session = {}; // Ro'yxatdan o'tgach sessiyani tozalash
+        ctx.session = {};
 
-        await ctx.reply(
-            "✅ Ro'yxatdan muvaffaqiyatli o'tdingiz!",
+        const message = await ctx.reply(
+            "✅ Ro'yxatdan o'tdingiz!\n🚀 Ilova yuklanmoqda...",
             Markup.inlineKeyboard([
                 [Markup.button.webApp(
-                    '🚀 Ilovani ochish',
+                    '🚀 Ilovani ochish (Ngrok)',
                     `https://cataractal-unperiphrastic-catherina.ngrok-free.dev/telegram/student-schedule?token=${token}`
                 )]
             ])
         );
+
+        setTimeout(async () => {
+            if (!ctx.chat?.id) return;
+
+            try {
+                await ctx.telegram.editMessageText(
+                    ctx.chat.id, // Endi bu yerda xato bo'lmaydi
+                    message.message_id,
+                    undefined,
+                    "⚠️ Agar yuqoridagi havola ishlamasa, lokal havoladan foydalaning:",
+                    Markup.inlineKeyboard([
+                        [Markup.button.webApp(
+                            '🚀 Ilovani ochish (Ngrok)',
+                            `https://cataractal-unperiphrastic-catherina.ngrok-free.dev/telegram/student-schedule?token=${token}`
+                        )],
+                        [Markup.button.webApp(
+                            '🏠 Ilovani ochish (Localhost)',
+                            `http://localhost:5050/telegram/student-schedule?token=${token}`
+                        )]
+                    ])
+                );
+            } catch (error) {
+                console.log("Xabarni tahrirlashda xato yoki xabar allaqachon o'chirilgan");
+            }
+        }, 5000);
     }
 }
