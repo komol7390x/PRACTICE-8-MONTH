@@ -74,6 +74,18 @@ export class StudentController {
     return this.studentService.findOneStudent(+id);
   }
 
+  // --------------------- GET ONE ---------------------
+
+  @Get('telegram/:tgId')
+  @ApiOperation({ summary: 'Telegram Id' })
+  // @AccessRoles(Roles.SUPER_ADMIN, Roles.STUDENT, 'ID', Roles.ADMIN, Roles.TEACHER)
+  @AccessRoles('public')
+
+  findOneTelegramId(
+    @Param('tgId') tgId: string) {
+    return this.studentService.findOneTelegramId(tgId);
+  }
+
   // --------------------- STUDENT DETAILS ONE ---------------------
 
   @Get('details')

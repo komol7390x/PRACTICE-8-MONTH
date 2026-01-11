@@ -156,6 +156,20 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
     return successRes({ ...student })
 
   }
+  // --------------------- TELEGRAM ONE STUDENT ---------------------
+
+  async findOneTelegramId(tgId: string) {
+    const student = await this.studentRepository.findOne({
+      where: { tgId, isDeleted: false, role: Roles.STUDENT },
+      relations: { lessons: true }
+    });
+    if (!student) {
+      throw new NotFoundException(`${tgId} tgId student not found`)
+    }
+    return successRes({ ...student })
+
+  }
+
   // -------------------- UPDATE STUDENT --------------------
   async updateStudent(id: number, dto: UpdateStudentDto, user: IToken) {
     const { firstName, lastName, phoneNumber, tgUsername, tgId } = dto
@@ -185,7 +199,7 @@ export class StudentService extends BaseService<CreateStudentDto, UpdateStudentD
   }
   // -------------------- ADD BALANCE --------------------
   async addBalance(id: number, balance: number) {
-    
+
     const student = await this.studentRepository.findOne({ where: { id } })
     if (!student) {
       throw new NotFoundException(`${id} not found on Student`)

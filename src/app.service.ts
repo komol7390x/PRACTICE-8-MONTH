@@ -33,6 +33,12 @@ export class AppService {
                 },
             }),
         );
+
+        app.use((_, res: express.Response, next) => {
+            res.setHeader('ngrok-skip-browser-warning', 'true');
+            next();
+        });
+
         // ---------------- CORS ----------------
         app.enableCors({
             origin: true,
