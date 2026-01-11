@@ -11,10 +11,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     constructor(
         @InjectRepository(TeacherEntity) private readonly teacherRepo: Repository<TeacherEntity>,
     ) {
-        super({
+        super({            
             clientID: process.env.GOOGLE_CLIENT_ID,
             clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-            callbackURL: `${appConfig.FRONT_URL}/teacher/google/step-2`,
+            callbackURL: `http://localhost:3030/api/v1/auth/google/callback`,
             scope: [
                 'email',
                 'profile',

@@ -50,9 +50,8 @@ export class AuthController {
     @ApiOperation({ summary: 'callback for google get data' })
     @UseGuards(AuthGuard('google'))
     async googleCallback(@Req() req, @Res() res) {
-
         const { item, step } = req.user;
-
+        console.log(12345678, 'callback is run');
         // Agar step 2 bo'lsa
         if (step == 2) {
             await this.authService.generateTokens(item.id, res)

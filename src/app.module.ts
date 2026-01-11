@@ -14,7 +14,7 @@ import { CertificateModule } from './api/product/certificate/certificate.module'
 import { LessonTemplateModule } from './api/product/lesson-template/lesson-template.module';
 import { NotificationModule } from './api/product/notification/notification.module';
 import { AuthModule } from './api/user/auth/auth.module';
-import { BotModule } from './api/product/bot/bot.module';
+import { BotModule } from '../bot/bot.module';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { session } from 'telegraf';
 import { ScheduleModule } from '@nestjs/schedule';
