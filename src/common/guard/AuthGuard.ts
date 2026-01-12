@@ -30,7 +30,7 @@ export class AuthGuard implements CanActivate {
       req.cookies?.[TokenName.TEACHER_TOKEN] ||
       this.extractTokenFromHeader(req) ||
       req.query?.token;
-
+    
     if (!token) throw new UnauthorizedException('Token topilmadi');
 
     try {

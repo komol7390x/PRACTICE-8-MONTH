@@ -23,14 +23,16 @@ export class LessonTemplateController {
   @Post('booked-by-student/:id')
 
   @ApiOperation({ summary: 'book lesson by student' })
-  @AccessRoles(Roles.STUDENT, Roles.ADMIN, Roles.SUPER_ADMIN)
-  // @AccessRoles('public')
+  // @AccessRoles(Roles.STUDENT, Roles.ADMIN, Roles.SUPER_ADMIN)
+  @AccessRoles('public')
 
   async bookLessonByStudent(
     @Param('id', ParseIntPipe) id: number,
     @Query('lessonId', ParseIntPipe) lessonId: number,
     @Body() dto: CreateLessonTemplateDto
-  ) {        
+  ) {    
+    console.log(11111,id,lessonId,dto);
+    
     return this.lessonTemplateService.bookScheduleByStudent(id, lessonId, dto)
   }
 
@@ -114,10 +116,10 @@ export class LessonTemplateController {
 
   @Get('student/:studentId')
 
+  @ApiLessonFiltersStudent()
   @ApiOperation({ summary: 'Get lesson for student' })
   // @AccessRoles(Roles.STUDENT, 'ID')
   @AccessRoles('public')
-  @ApiLessonFiltersStudent()
 
   async studentLesson(
     @Param('studentId', ParseIntPipe) studentId: number,
@@ -132,8 +134,7 @@ export class LessonTemplateController {
 
     if (limitNumber < 1) limitNumber = 1;
     if (limitNumber > 100) limitNumber = 100;
-    pageNumber = pageNumber < 1 ? 1 : pageNumber
-
+    pageNumber = pageNumber < 1 ? 1 : pageNumber    
     return this.lessonTemplateService.findAllBookLesson({
       status,
       weekday,
