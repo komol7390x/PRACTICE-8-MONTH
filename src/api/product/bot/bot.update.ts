@@ -5,11 +5,12 @@ import { CreateBotDto } from './dto/create-bot.dto';
 import { OnModuleInit } from '@nestjs/common';
 import { TokenService } from 'src/infrastructure/token/Token';
 import { Roles } from 'src/common/enum/roles.enum';
+import { appConfig } from 'src/config';
 
 interface BotSession {
     step?: 'FIRST_NAME' | 'LAST_NAME' | 'PHONE';
     firstName?: string;
-    lastName?: string;
+    lastName?: string | null;
 }
 
 @Update()
@@ -81,7 +82,7 @@ export class BotUpdate implements OnModuleInit {
             Markup.inlineKeyboard([
                 [Markup.button.webApp(
                     '🚀 Ilovani ochish',
-                    `https://cataractal-unperiphrastic-catherina.ngrok-free.dev/telegram/student-schedule?token=${token}`
+                    `${appConfig.FRONT.SERVER}/tgb?token=${token}`
                 )]
             ])
         );
@@ -147,18 +148,25 @@ export class BotUpdate implements OnModuleInit {
             await ctx.reply(
                 "👤 Endi familiyangizni yuboring:",
                 Markup.keyboard([
-                    [Markup.button.text(ctx.from?.last_name ?? 'Familiyam yo\'q')],
+                    [Markup.button.text("Familiyam yo'q")], // Tugma matni
                 ]).resize().oneTime(),
             );
             return;
         }
 
+        // 2. FAMILIYANI QABUL QILISH
         if (ctx.session.step === 'LAST_NAME') {
-            if (!text || text.length < 3) {
-                await ctx.reply("❌ Familiya kamida 3 ta harf bo'lishi kerak:");
-                return;
+            // Agar "Familiyam yo'q" tugmasini bossa yoki shunday yozsa
+            if (text === "Familiyam yo'q") {
+                ctx.session.lastName = null; // Sessionda null saqlaymiz
+            } else {
+                if (text.length < 3) {
+                    await ctx.reply("❌ Familiya kamida 3 ta harf bo'lishi kerak:");
+                    return;
+                }
+                ctx.session.lastName = text;
             }
-            ctx.session.lastName = text;
+
             ctx.session.step = 'PHONE';
             await ctx.reply(
                 "📞 Telefon raqamingizni yuboring",

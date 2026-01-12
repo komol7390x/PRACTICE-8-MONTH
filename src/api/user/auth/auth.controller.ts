@@ -51,12 +51,11 @@ export class AuthController {
     @UseGuards(AuthGuard('google'))
     async googleCallback(@Req() req, @Res() res) {
         const { item, step } = req.user;
-        console.log(12345678, 'callback is run');
         // Agar step 2 bo'lsa
         if (step == 2) {
             await this.authService.generateTokens(item.id, res)
             return res.redirect(
-                `${appConfig.FRONT_URL}/teacher/google/step-2`,
+                `${appConfig.FRONT.LOCAL}/teacher/google/step-2`,
             );
         }
 
@@ -64,18 +63,18 @@ export class AuthController {
         if (step === 'completed') {
             await this.authService.generateTokens(item.id, res)
             // Teacher dashboard'ga redirect
-            return res.redirect(`${appConfig.FRONT_URL}/teacher/login`);
+            return res.redirect(`${appConfig.FRONT.LOCAL}/teacher/login`);
         }
 
         // // Agar account inactive bo'lsa
         if (step === 'inactive') {
             await this.authService.generateTokens(item.id, res)
             return res.redirect(
-                `${appConfig.FRONT_URL}/teacher-panel/settings`,
+                `${appConfig.FRONT.LOCAL}/teacher-panel/settings`,
             );
         }
 
         // Default redirect
-        return res.redirect(`${appConfig.FRONT_URL}/login/teacher?error=unknown_step`);
+        return res.redirect(`${appConfig.FRONT.LOCAL}/login/teacher?error=unknown_step`);
     }
 }

@@ -30,7 +30,7 @@ export class LessonTemplateController {
     @Param('id', ParseIntPipe) id: number,
     @Query('lessonId', ParseIntPipe) lessonId: number,
     @Body() dto: CreateLessonTemplateDto
-  ) {    
+  ) {        
     return this.lessonTemplateService.bookScheduleByStudent(id, lessonId, dto)
   }
 

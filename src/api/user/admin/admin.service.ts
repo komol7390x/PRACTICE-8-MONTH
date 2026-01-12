@@ -94,7 +94,6 @@ export class AdminService
 
   async getDashboard() {
     const allStudent = await this.studentRepository.findAndCount({ where: { isActive: true, isDeleted: false } })
-    console.log(allStudent);
     return allStudent
   }
 

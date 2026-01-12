@@ -48,7 +48,6 @@ export class LessonTemplateService extends BaseService<CreateLessonTemplateDto, 
       this.studentRepo.findOne({ where: { id: studentId } }),
       this.scheduleRepo.findOne({ where: { id: scheduleId }, relations: { teacher: true } })
     ]);
-    console.log(student, schedule, startTime, finishTime, scheduleId, scheduleId);
     if (!student) throw new NotFoundException("Talaba topilmadi.");
     if (!schedule) throw new NotFoundException("Dars jadvali topilmadi.");
 
