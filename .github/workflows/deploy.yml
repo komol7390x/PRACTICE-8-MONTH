@@ -20,10 +20,12 @@ jobs:
 
       - name: Build and Zip
         run: |
-          # 1. Kutubxonalarni o'rnatish va build qilish
           npm install
+          # Build qilish
           npm run build
-          # 2. Faqat dist va package fayllarni zip qilish
+          # Tekshirish: dist papkasi bormi?
+          ls -la dist/
+          # Zip ichiga dist papkasini to'liq solish
           zip -r deploy.zip dist package.json package-lock.json
 
       - name: Copy zip to server
@@ -33,7 +35,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: "deploy.zip"
-          target: "~/Komol/beckend/PRACTICE-8-MONTH"
+          target: "/root/Komol/beckend/PRACTICE-8-MONTH"
 
       - name: Finalize Deployment on Server
         uses: appleboy/ssh-action@master
@@ -42,24 +44,30 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            cd ~/Komol/beckend/PRACTICE-8-MONTH
+            # Xatolik bo'lsa darhol to'xtatish
+            set -e
             
-            # 1. Git orqali o'zgarishlarni pull qilish (serverdagi kod yangilanishi uchun)
-            git pull origin staging
+            cd /root/Komol/beckend/PRACTICE-8-MONTH
             
-            # 2. Kelgan zip arxivni ochish (dist papkasini yangilaydi)
+            # 1. Git pull (serverdagi kodni yangilash)
+            git pull origin staging || echo "Git pull amalga oshmadi, davom etamiz..."
+            
+            # 2. Arxivni ochish va eski distni tozalash
+            rm -rf dist
             unzip -o deploy.zip
             
-            # 3. Yangi kutubxonalarni o'rnatish (faqat production)
+            # 3. Kutubxonalarni o'rnatish
             npm install --production
             
-            # 4. PM2 ni yangilash (Eskisini o'chirib yangisini ishga tushirish)
-            # Bu usul Telegram Bot conflict xatosini oldini oladi
+            # 4. PM2 ni boshqarish
+            # Avval o'chirib ko'ramiz, xato bersa ham davom etamiz (|| true)
             pm2 delete backend-staging || true
+            
+            # Yangi start (To'liq yo'l bilan)
             pm2 start dist/main.js --name "backend-staging"
             
-            # 5. Holatni saqlash va vaqtincha faylni o'chirish
+            # 5. Saqlash va tozalash
             pm2 save
             rm -f deploy.zip
             
-            echo "✅ Deploy muvaffaqiyatli yakunlandi!"
+            echo "✅ Backend muvaffaqiyatli yangilandi!"
