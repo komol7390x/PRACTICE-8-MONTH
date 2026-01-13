@@ -42,17 +42,17 @@ jobs:
           script: |
             cd ~/Komol/beckend/PRACTICE-8-MONTH
             
-            # 1. Arxivni ochish (eskisini yangisiga almashtiradi)
+            # 1. Arxivni ochish
             unzip -o deploy.zip
             
             # 2. Faqat kerakli kutubxonalarni o'rnatish
             npm install --production
             
-            # 3. Eski jarayonni o'chirib, yangitdan ishga tushirish 
-            # (Bu dublikat ko'payib ketishini va Bot Conflict xatosini oldini oladi)
+            # 3. PM2 ni boshqarish (Eskisini o'chirib yangisini yoqish)
+            # Bu Telegram bot conflict xatosini oldini oladi
             pm2 delete backend-staging || true
             pm2 start dist/main.js --name "backend-staging"
             
-            # 4. Vaqtinchalik faylni o'chirish va PM2 holatini saqlash
-            rm -f deploy.zip
+            # 4. Holatni saqlash va vaqtincha faylni o'chirish
             pm2 save
+            rm -f deploy.zip
