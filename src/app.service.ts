@@ -106,8 +106,8 @@ export class AppService {
 
         await app.listen(appConfig.PORT, () => {
             console.log(`Server started on port ${appConfig.PORT} \n`);
-            console.log(`http://${appConfig.DOMAIN}:${appConfig.PORT}/${appConfig.APP_VERSION}`)
-            console.log(`Swagger http://${appConfig.DOMAIN}:${appConfig.PORT}/${appConfig.APP_VERSION}/${swagger}`)
+            console.log(`${appConfig.BECKEND.URL}`)
+            console.log(`Swagger ${appConfig.BECKEND.URL}/${swagger}`)
         });
     }
 }

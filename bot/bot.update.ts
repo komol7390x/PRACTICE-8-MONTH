@@ -5,6 +5,7 @@ import { CreateBotDto } from './dto/create-bot.dto';
 import { OnModuleInit } from '@nestjs/common';
 import { TokenService } from 'src/infrastructure/token/Token';
 import { Roles } from 'src/common/enum/roles.enum';
+import { appConfig } from 'src/config';
 
 interface BotSession {
     step?: 'FIRST_NAME' | 'LAST_NAME' | 'PHONE';
@@ -88,7 +89,7 @@ export class BotUpdate implements OnModuleInit {
                             )],
                             [Markup.button.webApp(
                                 '🏠 Ilovani ochish (Localhost)',
-                                `http://localhost:5050/telegram/student-schedule?token=${token}`
+                                `${appConfig.FRONT.URL}/telegram/student-schedule?token=${token}`
                             )]
                         ])
                     );
@@ -209,8 +210,8 @@ export class BotUpdate implements OnModuleInit {
                             `https://cataractal-unperiphrastic-catherina.ngrok-free.dev/telegram/student-schedule?token=${token}`
                         )],
                         [Markup.button.webApp(
-                            '🏠 Ilovani ochish (Localhost)',
-                            `http://localhost:5050/telegram/student-schedule?token=${token}`
+                            '🏠 Ilovani ochish (App)',
+                            `${appConfig.FRONT.URL}/telegram/student-schedule?token=${token}`
                         )]
                     ])
                 );

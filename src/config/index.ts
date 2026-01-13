@@ -6,7 +6,6 @@ interface IConfig {
   PORT: number;
   NODE_ENV: string;
   APP_VERSION: string,
-  DOMAIN: string
   SWAGGER: {
     PASSWORD: string
   }
@@ -28,8 +27,10 @@ interface IConfig {
     PASS: string
   },
   FRONT: {
-    LOCAL: string,
-    SERVER: string,
+    URL: string
+  }
+  BECKEND: {
+    URL: string
   }
   GOOGLE: {
     ID: String,
@@ -37,7 +38,6 @@ interface IConfig {
     CALLBACK_URL: String
     JWT_SECRET: String
   }
-  GET_URL: string,
   UPLOAD_FOLDER: string;
   TELEGRAM_BOT_TOKEN: string;
 }
@@ -46,13 +46,18 @@ export const appConfig: IConfig = {
   PORT: Number(process.env.PORT),
   NODE_ENV: String(process.env.NODE_ENV),
   APP_VERSION: String(process.env.APP_VERSION),
-  DOMAIN: String(process.env.DOMAIN),
   SWAGGER: {
     PASSWORD: String(process.env.SWAGGER_PASSWORD),
   },
   FRONT: {
-    LOCAL: String(process.env.FRONT_URL_LOCAL),
-    SERVER: String(process.env.FRONT_URL_SERVER),
+    URL: process.env.NODE_ENV === 'development'
+      ? String(process.env.FRONT_URL_SERVER)
+      : String(process.env.FRONT_URL_LOCAL),
+  },
+  BECKEND: {
+    URL: process.env.NODE_ENV === 'development'
+      ? String(process.env.BECKEND_URL_SERVER)
+      : String(process.env.BECKEND_URL_LOCAL),
   },
   TOKEN: {
     ACCESS_TOKEN_KEY: String(process.env.TOKEN_ACCESS_TOKEN_KEY),
@@ -78,7 +83,6 @@ export const appConfig: IConfig = {
     CALLBACK_URL: String(process.env.GOOGLE_CALLBACK_URL),
     JWT_SECRET: String(process.env.JWT_SECRET)
   },
-  GET_URL: String(process.env.GET_URL),
   UPLOAD_FOLDER: String(process.env.UPLOAD_FOLDER),
   TELEGRAM_BOT_TOKEN: String(process.env.TELEGRAM_BOT_TOKEN)
 };
