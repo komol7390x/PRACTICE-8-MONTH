@@ -89,10 +89,12 @@ export class AppService {
                 },
             }),
         );
-
+        const dateNow = new Date();
+        console.log(`\n🕒 Server started at: ${dateNow.toLocaleString('UZ')}`);
         // swagger
         const config = new DocumentBuilder()
             .setTitle('ONLINE SCHOOL API')
+            .setDescription(`\n🕒 Server Update at: ${dateNow.toLocaleString('UZ')}`)
             .setVersion('1.0')
             .addBearerAuth({
                 type: 'http',
