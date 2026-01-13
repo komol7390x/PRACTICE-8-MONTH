@@ -21,11 +21,10 @@ jobs:
       - name: Build and Zip
         run: |
           npm install
-          # Build qilish
           npm run build
-          # Tekshirish: dist papkasi bormi?
-          ls -la dist/
-          # Zip ichiga dist papkasini to'liq solish
+          # Zip qilishdan oldin fayllar borligini tekshiramiz
+          if [ ! -d "dist" ]; then echo "Build failed: dist folder not found"; exit 1; fi
+          # Zip ichiga dist papkasi va package fayllarni solamiz
           zip -r deploy.zip dist package.json package-lock.json
 
       - name: Copy zip to server
@@ -44,30 +43,29 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # Xatolik bo'lsa darhol to'xtatish
-            set -e
-            
             cd /root/Komol/beckend/PRACTICE-8-MONTH
             
-            # 1. Git pull (serverdagi kodni yangilash)
-            git pull origin staging || echo "Git pull amalga oshmadi, davom etamiz..."
+            # 1. Serverdagi Gitni yangilash
+            git pull origin staging || echo "Git pull failed, skipping..."
             
-            # 2. Arxivni ochish va eski distni tozalash
+            # 2. Eskisini tozalash va yangisini ochish
             rm -rf dist
             unzip -o deploy.zip
             
-            # 3. Kutubxonalarni o'rnatish
+            # 3. Fayllar tushganini tekshirish (Logda ko'rinadi)
+            ls -la dist/
+            
+            # 4. Kutubxonalarni o'rnatish
             npm install --production
             
-            # 4. PM2 ni boshqarish
-            # Avval o'chirib ko'ramiz, xato bersa ham davom etamiz (|| true)
+            # 5. PM2 ni boshqarish
+            # Agar backend-staging nomi bilan topilmasa xato bermasligi uchun || true
             pm2 delete backend-staging || true
             
-            # Yangi start (To'liq yo'l bilan)
-            pm2 start dist/main.js --name "backend-staging"
+            # Aniq yo'l (Absolute path) bilan ishga tushirish
+            pm2 start /root/Komol/beckend/PRACTICE-8-MONTH/dist/main.js --name "backend-staging"
             
-            # 5. Saqlash va tozalash
+            # 6. Tozalash
             pm2 save
             rm -f deploy.zip
-            
-            echo "✅ Backend muvaffaqiyatli yangilandi!"
+            echo "🚀 Backend successfully deployed!"
