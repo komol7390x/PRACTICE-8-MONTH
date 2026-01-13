@@ -10,11 +10,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as express from 'express';
-import path, { join } from 'path';
+import { join } from 'path';
 import { appConfig } from 'src/config';
 import { AllExceptionsFilter } from 'src/infrastructure/exception/All-exception-filter';
 import { winstonConfig } from 'src/infrastructure/winston/winston.config';
-import * as fs from 'fs';
 import basicAuth from 'express-basic-auth';
 
 @Injectable()
@@ -25,7 +24,7 @@ export class AppService {
             logger: winstonConfig,
         });
         app.use(
-            ['/swagger',],
+            [`${appConfig.APP_VERSION}/swagger`,],
             basicAuth({
                 challenge: true,
                 users: {
@@ -93,7 +92,7 @@ export class AppService {
 
         // swagger
         const config = new DocumentBuilder()
-            .setTitle('IPOST Market')
+            .setTitle('ONLINE SCHOOL API')
             .setVersion('1.0')
             .addBearerAuth({
                 type: 'http',
@@ -103,12 +102,12 @@ export class AppService {
             .build();
         const swagger = 'swagger'
         const documentFactory = () => SwaggerModule.createDocument(app, config);
-        SwaggerModule.setup(swagger, app, documentFactory());
+        SwaggerModule.setup(`${appConfig.APP_VERSION}/${swagger}`, app, documentFactory());
 
         await app.listen(appConfig.PORT, () => {
             console.log(`Server started on port ${appConfig.PORT} \n`);
             console.log(`http://${appConfig.DOMAIN}:${appConfig.PORT}/${appConfig.APP_VERSION}`)
-            console.log(`Swagger http://${appConfig.DOMAIN}:${appConfig.PORT}/${swagger}`)
+            console.log(`Swagger http://${appConfig.DOMAIN}:${appConfig.PORT}/${appConfig.APP_VERSION}/${swagger}`)
         });
     }
 }
