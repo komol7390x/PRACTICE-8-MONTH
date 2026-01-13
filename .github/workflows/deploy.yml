@@ -18,10 +18,12 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Install and Build
+      - name: Build and Zip
         run: |
+          # 1. Kutubxonalarni o'rnatish va build qilish
           npm install
           npm run build
+          # 2. Faqat dist va package fayllarni zip qilish
           zip -r deploy.zip dist package.json package-lock.json
 
       - name: Copy zip to server
@@ -33,7 +35,7 @@ jobs:
           source: "deploy.zip"
           target: "~/Komol/beckend/PRACTICE-8-MONTH"
 
-      - name: Extract and Restart PM2
+      - name: Finalize Deployment on Server
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -42,17 +44,22 @@ jobs:
           script: |
             cd ~/Komol/beckend/PRACTICE-8-MONTH
             
-            # 1. Arxivni ochish
+            # 1. Git orqali o'zgarishlarni pull qilish (serverdagi kod yangilanishi uchun)
+            git pull origin staging
+            
+            # 2. Kelgan zip arxivni ochish (dist papkasini yangilaydi)
             unzip -o deploy.zip
             
-            # 2. Faqat kerakli kutubxonalarni o'rnatish
+            # 3. Yangi kutubxonalarni o'rnatish (faqat production)
             npm install --production
             
-            # 3. PM2 ni boshqarish (Eskisini o'chirib yangisini yoqish)
-            # Bu Telegram bot conflict xatosini oldini oladi
+            # 4. PM2 ni yangilash (Eskisini o'chirib yangisini ishga tushirish)
+            # Bu usul Telegram Bot conflict xatosini oldini oladi
             pm2 delete backend-staging || true
             pm2 start dist/main.js --name "backend-staging"
             
-            # 4. Holatni saqlash va vaqtincha faylni o'chirish
+            # 5. Holatni saqlash va vaqtincha faylni o'chirish
             pm2 save
             rm -f deploy.zip
+            
+            echo "✅ Deploy muvaffaqiyatli yakunlandi!"
