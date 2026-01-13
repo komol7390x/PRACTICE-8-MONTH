@@ -1,4 +1,4 @@
-name: Deploy Staging
+name: Deploy Backend Staging
 
 on:
   push:
@@ -6,32 +6,53 @@ on:
       - staging
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy via SSH
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install and Build
+        run: |
+          npm install
+          npm run build
+          # Faqat kerakli fayllarni zip qilamiz
+          zip -r deploy.zip dist package.json package-lock.json
+
+      - name: Copy zip to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "deploy.zip"
+          target: "~/Komol/beckend/PRACTICE-8-MONTH"
+
+      - name: Extract and Restart PM2
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            # 1. Faqat Backend papkasiga kirish
             cd ~/Komol/beckend/PRACTICE-8-MONTH
             
-            # 2. Kodni yangilash
-            git checkout staging
-            git pull origin staging
+            # 1. Arxivni ochish (eskisini ustidan yozadi)
+            unzip -o deploy.zip
             
-            # 3. Kutubxonalarni yangilash
-            npm install
+            # 2. Faqat kerakli kutubxonalarni o'rnatish
+            npm install --production
             
-            # 4. Build (RAM limit bilan)
-            export NODE_OPTIONS="--max-old-space-size=1024"
-            npm run build
+            # 3. Nomi bo'yicha restart qilish (backend-staging)
+            # Agar jarayon yo'q bo'lsa, yangi yaratadi
+            pm2 restart backend-staging --update-env || pm2 start dist/main.js --name "backend-staging"
             
-            # 5. Faqat Backendni restart qilish (ID: 9)
-            pm2 restart 9 --update-env
-            
-            # 6. Holatni saqlash
+            # 4. Tozalash va saqlash
+            rm -f deploy.zip
             pm2 save
