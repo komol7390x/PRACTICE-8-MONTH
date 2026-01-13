@@ -1,0 +1,37 @@
+name: Deploy Staging
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            # 1. Faqat Backend papkasiga kirish
+            cd ~/Komol/beckend/PRACTICE-8-MONTH
+            
+            # 2. Kodni yangilash
+            git checkout staging
+            git pull origin staging
+            
+            # 3. Kutubxonalarni yangilash
+            npm install
+            
+            # 4. Build (RAM limit bilan)
+            export NODE_OPTIONS="--max-old-space-size=1024"
+            npm run build
+            
+            # 5. Faqat Backendni restart qilish (ID: 9)
+            pm2 restart 9 --update-env
+            
+            # 6. Holatni saqlash
+            pm2 save
