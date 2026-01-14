@@ -62,8 +62,7 @@ export class AuthController {
         // // Agar step 'completed' bo'lsa, tokenlarni yaratamiz va cookies ga saqlaymiz
         if (step === 'completed') {
             await this.authService.generateTokens(item.id, res)
-            // Teacher dashboard'ga redirect
-            return res.redirect(`${appConfig.FRONT.URL}/teacher/login`);
+            return res.redirect(`${appConfig.FRONT.URL}/teacher-panel/statistics`);
         }
 
         // // Agar account inactive bo'lsa
@@ -75,6 +74,6 @@ export class AuthController {
         }
 
         // Default redirect
-        return res.redirect(`${appConfig.FRONT.URL}/login/teacher?error=unknown_step`);
+        return res.redirect(`${appConfig.FRONT.URL}/teacher/login`);
     }
 }
