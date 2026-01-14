@@ -32,7 +32,6 @@ export class LoggerInterceptor implements NestInterceptor {
         }
 
         // --- TELEGRAM (TELEGRAF) LOGGING ---
-        // Telegraf odatda 'rpc' yoki maxsus kontekst turini ishlatadi
         if (type as string === 'telegraf' || type === 'rpc') {
             const tgContext = context.getArgByIndex(0); // Telegram context (ctx)
 
@@ -66,7 +65,7 @@ export class LoggerInterceptor implements NestInterceptor {
 
             await this.loggerRepo.save(log);
         } catch (error) {
-            console.error('Logger xatosi:', error.message);
+            console.error('Logger xatosi:', error);
         }
     }
 }

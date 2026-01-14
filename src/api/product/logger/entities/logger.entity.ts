@@ -9,8 +9,8 @@ export class LoggerEntity extends BaseEntity {
     @Column({ type: 'int', nullable: true })
     userId: number
 
-    @Column({ type: 'enum', enum: Roles, nullable: true })
-    role: Roles
+    @Column({ type: 'varchar', nullable: true })
+    role: string
 
     @Column({ type: 'enum', enum: RequestMethod, nullable: true })
     method: RequestMethod

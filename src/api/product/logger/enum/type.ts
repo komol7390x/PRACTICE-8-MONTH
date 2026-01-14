@@ -8,4 +8,6 @@ export enum RequestMethod {
     DELETE = 'DELETE',
     PATCH = 'PATCH',
     HEAD = 'HEAD',
+    MESSAGE = 'MESSAGE',
+    CALLBACK_QUERY = 'CALLBACK_QUERY'
 }
