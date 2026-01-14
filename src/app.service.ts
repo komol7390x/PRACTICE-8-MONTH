@@ -19,12 +19,14 @@ import basicAuth from 'express-basic-auth';
 @Injectable()
 export class AppService {
     static async main() {
+        const swagger = 'swagger'
+        const swaggerPath = `/${appConfig.APP_VERSION}/${swagger}`;
         // ---------------- APPMODULE ----------------
         const app = await NestFactory.create<NestExpressApplication>(AppModule, {
             logger: winstonConfig,
         });
         app.use(
-            [`${appConfig.APP_VERSION}/swagger`,],
+            [swaggerPath,],
             basicAuth({
                 challenge: true,
                 users: {
@@ -102,9 +104,9 @@ export class AppService {
                 in: 'Header',
             })
             .build();
-        const swagger = 'swagger'
+        
         const documentFactory = () => SwaggerModule.createDocument(app, config);
-        SwaggerModule.setup(`${appConfig.APP_VERSION}/${swagger}`, app, documentFactory());
+        SwaggerModule.setup(swaggerPath, app, documentFactory());
 
         await app.listen(appConfig.PORT, () => {
             console.log(`Server started on port ${appConfig.PORT} \n`);
@@ -113,4 +115,3 @@ export class AppService {
         });
     }
 }
-
