@@ -5,6 +5,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LoggerEntity } from '../entities/logger.entity';
 import { RequestMethod, Type } from '../enum/type';
+import { Roles } from 'src/common/enum/roles.enum';
 
 @Injectable()
 export class LoggerInterceptor implements NestInterceptor {
@@ -14,37 +15,51 @@ export class LoggerInterceptor implements NestInterceptor {
     ) { }
 
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-        const request = context.switchToHttp().getRequest();
-        const { method, url, body, query, params, user } = request;
+        const type = context.getType();
 
-        // String metodni RequestMethod enumiga o'tkazamiz
-        const currentMethod = method.toUpperCase() as RequestMethod;
+        // --- HTTP LOGGING ---
+        if (type === 'http') {
+            const request = context.switchToHttp().getRequest();
+            const { method, url, body, query, params, user } = request;
+            const currentMethod = method?.toUpperCase() as RequestMethod;
 
-        // Faqat biz xohlagan metodlar bo'lsa log qilamiz
-        const isLoggable = Object.values(RequestMethod).includes(currentMethod);
-
-        if (!isLoggable) {
-            return next.handle();
+            if (Object.values(RequestMethod).includes(currentMethod)) {
+                this.saveLog(user, currentMethod, url, Type.REQUEST, { body, query, params });
+                return next.handle().pipe(
+                    tap(res => this.saveLog(user, currentMethod, url, Type.RESPONSE, res))
+                );
+            }
         }
 
-        // 1. Requestni saqlash
-        this.saveLog(user, currentMethod, url, Type.REQUEST, { body, query, params });
+        // --- TELEGRAM (TELEGRAF) LOGGING ---
+        // Telegraf odatda 'rpc' yoki maxsus kontekst turini ishlatadi
+        if (type as string === 'telegraf' || type === 'rpc') {
+            const tgContext = context.getArgByIndex(0); // Telegram context (ctx)
 
-        return next.handle().pipe(
-            tap((responseData) => {
-                // 2. Response saqlash
-                this.saveLog(user, currentMethod, url, Type.RESPONSE, responseData);
-            }),
-        );
+            // Telegramdan kelgan ma'lumotlar
+            const user = tgContext.from; // User ma'lumotlari (id, username)
+            const updateType = tgContext.updateType; // message, callback_query va h.k.
+            const message = tgContext.message?.text || tgContext.callbackQuery?.data;
+
+            // Telegram loglarini saqlash
+            this.saveLog(
+                { id: user?.id, role: Roles.STUDENT },
+                updateType.toUpperCase(), 
+                'TELEGRAM_BOT',
+                Type.REQUEST,
+                { message, raw: tgContext.update }
+            );
+        }
+
+        return next.handle();
     }
 
-    private async saveLog(user: any, method: RequestMethod, path: string, type: Type, data: any) {
+    private async saveLog(user: any, method: any, path: string, type: Type, data: any) {
         try {
-            // Create va Save metodlarini alohida chaqirish tiplar bilan bog'liq xatoni oldini oladi
             const log = new LoggerEntity();
-            log.userId = user?.id;
-            log.role = user?.role;
-            log.method = method; // Endi RequestMethod tipi bilan mos keladi
+            log.userId = user?.id?.toString();
+            log.role = user?.role || 'USER';
+            log.method = method;
             log.path = path;
             log.type = type;
             log.data = data;
