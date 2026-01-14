@@ -82,7 +82,7 @@ export class BotUpdate implements OnModuleInit {
             Markup.inlineKeyboard([
                 [Markup.button.webApp(
                     '🚀 Ilovani ochish',
-                    `${appConfig.FRONT.URL}/tgb?token=${token}`
+                    `https://komol.uz/tgb?token=${token}`
                 )]
             ])
         );
