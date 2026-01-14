@@ -157,7 +157,7 @@ export class BotUpdate implements OnModuleInit {
         // 2. FAMILIYANI QABUL QILISH
         if (ctx.session.step === 'LAST_NAME') {
             if (text === "Familiyam yo'q") {
-                ctx.session.lastName = null; 
+                ctx.session.lastName = null;
             } else {
                 if (text.length < 3) {
                     await ctx.reply("❌ Familiya kamida 3 ta harf bo'lishi kerak:");

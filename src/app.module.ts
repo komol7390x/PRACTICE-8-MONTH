@@ -20,6 +20,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { CourseModule } from './api/product/course/course.module';
 import { ScheduleTeacherModule } from './api/product/schedule/schedule.module';
 import { BotModule } from './api/product/bot/bot.module';
+import { LoggerModule } from './api/product/logger/logger.module';
 @Module({
     imports: [
         ConfigModule.forRoot({
@@ -67,6 +68,7 @@ import { BotModule } from './api/product/bot/bot.module';
             middlewares: [session()]
         }),
         ScheduleTeacherModule,
+        LoggerModule,
         LessonTemplateModule,
         AuthModule,
         AdminModule,
