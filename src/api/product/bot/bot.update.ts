@@ -156,9 +156,8 @@ export class BotUpdate implements OnModuleInit {
 
         // 2. FAMILIYANI QABUL QILISH
         if (ctx.session.step === 'LAST_NAME') {
-            // Agar "Familiyam yo'q" tugmasini bossa yoki shunday yozsa
             if (text === "Familiyam yo'q") {
-                ctx.session.lastName = null; // Sessionda null saqlaymiz
+                ctx.session.lastName = null; 
             } else {
                 if (text.length < 3) {
                     await ctx.reply("❌ Familiya kamida 3 ta harf bo'lishi kerak:");

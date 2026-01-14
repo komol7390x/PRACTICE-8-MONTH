@@ -22,6 +22,8 @@ import { TokenName } from 'src/common/enum/token-name';
 import { SortEnum } from './enum/admin-enum';
 import { RegisterStep2Dto } from '../teacher/dto/register-step2';
 import { ConfirmOtpDto } from './dto/confirm-tel';
+import { successRes } from 'src/infrastructure/response/success.response';
+import { appConfig } from 'src/config';
 
 @Controller('admin')
 @UseGuards(AuthGuard, RolesGuard)
@@ -122,7 +124,17 @@ export class AdminController {
         updatedAt: true,
       },
     });
-  }  // --------------------- DASHBOARD ---------------------
+  }
+  // --------------------- ENV ---------------------
+  @Get('env')
+
+  @ApiOperation({ summary: 'for super admin and admin' })
+  @AccessRoles(Roles.SUPER_ADMIN)
+    
+  getEnv() {
+    return successRes(appConfig)
+  }
+  // --------------------- DASHBOARD ---------------------
 
   @Get('dashboard')
 
