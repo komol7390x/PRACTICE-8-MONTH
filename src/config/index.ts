@@ -50,12 +50,12 @@ export const appConfig: IConfig = {
     PASSWORD: String(process.env.SWAGGER_PASSWORD),
   },
   FRONT: {
-    URL: process.env.NODE_ENV === 'development'
+    URL: process.env.NODE_ENV === 'production'
       ? String(process.env.FRONT_URL_SERVER)
       : String(process.env.FRONT_URL_LOCAL),
   },
   BECKEND: {
-    URL: process.env.NODE_ENV === 'development'
+    URL: process.env.NODE_ENV === 'production'
       ? String(process.env.BECKEND_URL_SERVER)
       : String(process.env.BECKEND_URL_LOCAL),
   },
