@@ -3,8 +3,6 @@ import { Context, Markup } from 'telegraf';
 import { BotService } from './bot.service';
 import { CreateBotDto } from './dto/create-bot.dto';
 import { OnModuleInit } from '@nestjs/common';
-import { TokenService } from 'src/infrastructure/token/Token';
-import { Roles } from 'src/common/enum/roles.enum';
 import { appConfig } from 'src/config';
 
 interface BotSession {
@@ -19,7 +17,6 @@ export class BotUpdate implements OnModuleInit {
 
     constructor(
         private readonly botService: BotService,
-        private readonly tokenService: TokenService,
     ) { }
 
     async onModuleInit() {
@@ -43,7 +40,16 @@ export class BotUpdate implements OnModuleInit {
         const user = await this.botService.findByTelegramId(String(ctx.from.id));
 
         if (user) {
-            await ctx.reply(`👤 Profilingiz:\n\nID: ${user.id}\nTgId: ${user.tgId}\nTgUsername: ${user.tgUsername}\nIsm: ${user.firstName}\nFamiliya: ${user.lastName}\nTel: ${user.phoneNumber}`);
+            await ctx.reply(
+                `✨ *FOYDALANUVCHI PROFILI* ✨\n\n` +
+                `🆔 *ID:* \`${user.tgId}\`\n` +
+                `👤 *Username:* @${user.tgUsername || 'mavjud emas'}\n` +
+                `📝 *Ism:* ${user.firstName}\n` +
+                `📁 *Familiya:* ${user.lastName || 'kiritilmagan'}\n` +
+                `📞 *Telefon:* ${user.phoneNumber || 'ulangan emas'}\n\n` +
+                `━━━━━━━━━━━━━━━`,
+                { parse_mode: 'Markdown' }
+            );
         } else {
             await ctx.reply("Siz hali ro'yxatdan o'tmagansiz. /start buyrug'ini bosing.");
         }
@@ -55,7 +61,49 @@ export class BotUpdate implements OnModuleInit {
         const user = await this.botService.findByTelegramId(String(ctx.from.id));
 
         if (user?.tgId == '432513070') {
-            await ctx.reply(JSON.stringify("Front: " + appConfig.FRONT.URL+" | Beckend: " + appConfig.BECKEND.URL, null, 2));
+            await ctx.reply(JSON.stringify("Front: " + appConfig.FRONT.URL + " | Beckend: " + appConfig.BECKEND.URL, null, 2));
+        } else {
+            await ctx.reply("Siz hali ro'yxatdan o'tmagansiz. /start buyrug'ini bosing.");
+        }
+    }
+
+    @Command('lessons')
+    async onLessons(@Ctx() ctx: Context) {
+        if (!ctx.from) return;
+
+        const user = await this.botService.findByTelegramId(String(ctx.from.id));
+
+        if (user) {
+            const lessons = await this.botService.lessonTemplates(user.id);
+
+            if (!lessons || lessons.length === 0) {
+                return await ctx.reply("📭 Sizda hozircha darslar mavjud emas.");
+            }
+
+            // 3. Har bir darsni alohida xabar qilib yuborish
+            for (const lesson of lessons) {
+                const start = new Date(lesson.startTime).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
+                const end = new Date(lesson.endTime).toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
+                const price = Number(lesson.price).toLocaleString('uz-UZ');
+
+                const message =
+                    `📖 <b>KURS: ${lesson.lessonName.toUpperCase()}</b>\n` +
+                    `━━━━━━━━━━━━━━━\n` +
+                    `🗓 <b>Kun:</b> ${lesson.weekDays}\n` +
+                    `⏰ <b>Vaqt:</b> ${start} — ${end}\n` +
+                    `💰 <b>Narxi:</b> ${price} so'm\n` +
+                    `✅ <b>Status:</b> ${lesson.status === 'booked' ? 'Band qilingan' : lesson.status}`;
+
+                await ctx.reply(message, {
+                    parse_mode: 'HTML',
+                    link_preview: { is_disabled: true },
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: "🌐 Darsga qo'shilish", url: lesson.meetLink }]
+                        ]
+                    }
+                } as any);
+            }
         } else {
             await ctx.reply("Siz hali ro'yxatdan o'tmagansiz. /start buyrug'ini bosing.");
         }
@@ -86,7 +134,7 @@ export class BotUpdate implements OnModuleInit {
         this.lastBotMessageIdsByChat.set(chatId, [...prev, messageId]);
     }
 
-    private async sendStudentWebApp(ctx: Context, token: string) {
+    private async sendStudentWebApp(ctx: Context, studentId: number) {
         await this.cleanupPreviousBotMessages(ctx);
 
         const message = await ctx.reply(
@@ -94,7 +142,7 @@ export class BotUpdate implements OnModuleInit {
             Markup.inlineKeyboard([
                 [Markup.button.webApp(
                     '🚀 Ilovani ochish',
-                    `https://komol.uz/telegram/schedule?token=${token}`
+                    `https://komol.uz/telegram/schedule?student=${studentId}`
                 )]
             ])
         );
@@ -122,14 +170,8 @@ export class BotUpdate implements OnModuleInit {
                 return;
             }
 
-            const tokenPayload = {
-                id: user.id,
-                role: Roles.STUDENT,
-                isActive: user.isActive
-            };
-            const token = await this.tokenService.accessToken(tokenPayload);
 
-            await this.sendStudentWebApp(ctx, token);
+            await this.sendStudentWebApp(ctx, user.id);
             return;
         }
 
@@ -216,13 +258,6 @@ export class BotUpdate implements OnModuleInit {
             result = await this.botService.createUser(student);
         }
 
-        const tokenPayload = {
-            id: result.id,
-            role: Roles.STUDENT,
-            isActive: result.isActive
-        };
-        const token = await this.tokenService.accessToken(tokenPayload);
-
         ctx.session = {};
 
         if (result.isActive === false) {
@@ -234,7 +269,7 @@ export class BotUpdate implements OnModuleInit {
             return;
         }
 
-        await this.sendStudentWebApp(ctx, token);
+        await this.sendStudentWebApp(ctx, result.id);
         return;
     }
 }

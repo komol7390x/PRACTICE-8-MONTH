@@ -92,11 +92,12 @@ export class AppService {
             }),
         );
         const dateNow = new Date();
-        console.log(`\n🕒 Server started at: ${dateNow.toLocaleString('UZ')}`);
         // swagger
         const config = new DocumentBuilder()
             .setTitle('ONLINE SCHOOL API')
-            .setDescription(`\n🕒 Server Update at: ${dateNow.toLocaleString('UZ')}`)
+            .setDescription(`\n🕒 Server Update at: ${dateNow.toLocaleString('uz-UZ', {
+                timeZone: 'Asia/Tashkent',
+            })}`)
             .setVersion('1.0')
             .addBearerAuth({
                 type: 'http',
@@ -104,7 +105,7 @@ export class AppService {
                 in: 'Header',
             })
             .build();
-        
+
         const documentFactory = () => SwaggerModule.createDocument(app, config);
         SwaggerModule.setup(swaggerPath, app, documentFactory());
 
