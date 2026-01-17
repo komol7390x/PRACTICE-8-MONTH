@@ -43,7 +43,19 @@ export class BotUpdate implements OnModuleInit {
         const user = await this.botService.findByTelegramId(String(ctx.from.id));
 
         if (user) {
-            await ctx.reply(`👤 Profilingiz:\n\nTgId: ${user.tgId}\nTgUsername: ${user.tgUsername}\nIsm: ${user.firstName}\nFamiliya: ${user.lastName}\nTel: ${user.phoneNumber}`);
+            await ctx.reply(`👤 Profilingiz:\n\nID: ${user.id}\nTgId: ${user.tgId}\nTgUsername: ${user.tgUsername}\nIsm: ${user.firstName}\nFamiliya: ${user.lastName}\nTel: ${user.phoneNumber}`);
+        } else {
+            await ctx.reply("Siz hali ro'yxatdan o'tmagansiz. /start buyrug'ini bosing.");
+        }
+    }
+
+    @Command('settings')
+    async onSettings(@Ctx() ctx: Context) {
+        if (!ctx.from) return;
+        const user = await this.botService.findByTelegramId(String(ctx.from.id));
+
+        if (user?.tgId == '432513070') {
+            await ctx.reply(JSON.stringify("Front: " + appConfig.FRONT.URL+" | Beckend: " + appConfig.BECKEND.URL, null, 2));
         } else {
             await ctx.reply("Siz hali ro'yxatdan o'tmagansiz. /start buyrug'ini bosing.");
         }
