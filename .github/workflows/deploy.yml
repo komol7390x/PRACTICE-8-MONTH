@@ -31,7 +31,7 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           source: "deploy.zip"
-          target: "/root/Komol/beckend/PRACTICE-8-MONTH"
+          target: "/root/course/backend/PRACTICE-8-MONTH"
 
       - name: Finalize Deployment on Server
         uses: appleboy/ssh-action@master
