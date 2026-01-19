@@ -29,7 +29,7 @@ export class LessonTemplateEntity extends BaseEntity {
     @Column({ default: false, nullable: true })
     isPaidToTeacher: boolean;
 
-    @Column({ type: 'varchar' })
+    @Column({ type: 'varchar', nullable: true })
     lessonName: string;
 
     @Column({ type: 'timestamptz' })
