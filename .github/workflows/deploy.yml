@@ -41,7 +41,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
             export PM2_HOME=/root/.pm2
-            cd /root/Komol/beckend/PRACTICE-8-MONTH
+            cd /root/course/beckend/PRACTICE-8-MONTH
             
             # 1. Serverda git orqali kodni yangilash
             git checkout staging
