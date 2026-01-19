@@ -40,24 +40,40 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
+            # PM2 yo'lini aniqlash
             export PM2_HOME=/root/.pm2
-            cd /root/course/backend/PRACTICE-8-MONTH
             
-            # 1. Serverda git orqali kodni yangilash
+            # 1. Papkaga kirish (agar papka bo'lmasa xato berib to'xtaydi)
+            cd /root/course/backend/PRACTICE-8-MONTH || { echo "Papka topilmadi"; exit 1; }
+            
+            # 2. Git orqali kodni yangilash
+            git fetch origin staging
             git checkout staging
             git pull origin staging
             
-            # 2. Yangi buildni (zip) yoyish
-            rm -rf dist
-            unzip -o deploy.zip
+            # 3. Zip faylni yoyish (unzip o'rnatilgan bo'lishi shart)
+            if [ -f "deploy.zip" ]; then
+                rm -rf dist
+                unzip -o deploy.zip
+                rm -f deploy.zip
+            else
+                echo "deploy.zip topilmadi, build jarayonini tekshiring!"
+            fi
             
-            # 3. Kutubxonalarni yangilash
-            npm install --production
+            # 4. Kutubxonalarni o'rnatish
+            npm install --omit=dev
             
-            # 4. PM2 ni restart qilish (O'chirib yoqish o'rniga restart yaxshi)
-            pm2 restart backend-staging || pm2 start dist/src/main.js --name "backend-staging"
+            # 5. PM2: Agar jarayon bo'lsa restart, bo'lmasa start
+            # --update-env yangi o'zgaruvchilarni qabul qilish uchun kerak
+            pm2 describe backend-staging > /dev/null
+            if [ $? -eq 0 ]; then
+              echo "Restarting backend-staging..."
+              pm2 restart backend-staging --update-env
+            else
+              echo "Starting new process backend-staging..."
+              pm2 start dist/src/main.js --name "backend-staging"
+            fi
             
-            # 5. Tozalash
+            # 6. Holatni saqlash
             pm2 save
-            rm -f deploy.zip
-            echo "✅ Backend git pull va yangi build bilan muvaffaqiyatli ishga tushdi!"
+            echo "✅ Backend muvaffaqiyatli yangilandi va ishga tushdi!"
