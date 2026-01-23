@@ -21,6 +21,7 @@ export class AppService {
     static async main() {
         const swagger = 'swagger'
         const swaggerPath = `/${appConfig.APP_VERSION}/${swagger}`;
+
         // ---------------- APPMODULE ----------------
         const app = await NestFactory.create<NestExpressApplication>(AppModule, {
             logger: winstonConfig,
@@ -34,11 +35,6 @@ export class AppService {
                 },
             }),
         );
-
-        app.use((_, res: express.Response, next) => {
-            res.setHeader('ngrok-skip-browser-warning', 'true');
-            next();
-        });
 
         // ---------------- CORS ----------------
         app.enableCors({
@@ -92,6 +88,7 @@ export class AppService {
             }),
         );
         const dateNow = new Date();
+        
         // swagger
         const config = new DocumentBuilder()
             .setTitle('ONLINE SCHOOL API')
